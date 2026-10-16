@@ -2,8 +2,6 @@
 
 A news outlet for artificial intelligence and the road to superintelligence. An **n8n** workflow gathers and summarizes stories; this platform publishes them on the **web** and in an **iOS/Android app**, completely free, with ad slots built in for future revenue.
 
-Forked from the Helio Intelligence Platform: the Express/MongoDB API, auth, n8n ingest, daily brief, comments, moderation, and admin tooling were kept and reshaped; billing, the expert-review roles, journals, and the referral program were removed.
-
 ## What readers get
 
 | | No account | Free account |
@@ -76,7 +74,7 @@ flutter run                       # Android emulator: --dart-define=API_BASE_URL
 
 ## Connect n8n
 
-Point your workflow's HTTP Request node at `POST {API}/api/news` with header `x-api-key: {API_KEY}`. Payloads from the old Helio workflow are accepted unchanged; RSS-style fields (`link`, `pubDate`, `description`) are also understood. Full contract and a suggested LLM step: [docs/N8N_API.md](docs/N8N_API.md).
+Point your workflow's HTTP Request node at `POST {API}/api/news` with header `x-api-key: {API_KEY}`. RSS-style fields (`link`, `pubDate`, `description`) are also understood. Full contract and a suggested LLM step: [docs/N8N_API.md](docs/N8N_API.md).
 
 ## API at a glance
 

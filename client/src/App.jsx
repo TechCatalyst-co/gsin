@@ -49,7 +49,7 @@ export default function App() {
               <Route path="moderation" element={<AdminModeration />} />
               <Route path="members" element={<AdminMembers />} />
             </Route>
-            {/* Old Helio paths */}
+            {/* Legacy paths */}
             <Route path="/daily-brief" element={<Navigate to="/brief" replace />} />
             <Route path="/pricing" element={<Navigate to="/" replace />} />
             <Route path="/premium" element={<Navigate to="/" replace />} />

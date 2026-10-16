@@ -121,11 +121,3 @@ No key needed.
 | `GET /api/news/:slugOrId` | One story plus related. |
 | `GET /api/public/rss[?category=]` | RSS 2.0 of the latest 50 stories (also at `/rss.xml` on the web host). |
 | `GET /api/public/sitemap.xml` | For search engines. |
-
-## Migrating the existing Helio workflow
-
-The old `POST /api/news` and `POST /api/daily-brief` payloads are accepted unchanged. To switch a copied Helio workflow over:
-
-1. Point both HTTP Request nodes at the new API URL and new `API_KEY`.
-2. Change the LLM prompt's category list to the desks above and ask for `tags`, `summary`, and (optionally) `analysis`. You can drop the relevance scoring step.
-3. Drop the counsel/trainer/medical branches and the review-published webhook; this outlet has no expert-review flow.
