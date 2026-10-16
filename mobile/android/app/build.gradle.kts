@@ -66,3 +66,10 @@ android {
 flutter {
     source = "../.."
 }
+
+// Breaking-news push needs Firebase config from the Firebase console
+// (android/app/google-services.json). Without it the app builds and runs with
+// push turned off. See mobile/RELEASE.md.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

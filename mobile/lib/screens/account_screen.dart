@@ -7,6 +7,7 @@ import '../api/api_exception.dart';
 import '../auth/auth_state.dart';
 import '../brand.dart';
 import '../config.dart';
+import '../push/push_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -44,6 +45,19 @@ class AccountScreen extends StatelessWidget {
     final auth = context.watch<AuthState>();
     final user = auth.user;
 
+    final push = context.watch<PushService>();
+    final alerts = [
+      if (push.available)
+        SwitchListTile(
+          title: const Text('Breaking news alerts'),
+          subtitle: Text(push.blocked
+              ? 'Notifications are off for ${Brand.short} in your phone settings'
+              : 'A notification when a major story breaks'),
+          value: push.enabled,
+          onChanged: (v) => push.setEnabled(v),
+        ),
+    ];
+
     final footer = [
       const SizedBox(height: 24),
       ListTile(title: const Text('Privacy'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => openExternal('$webBaseUrl/privacy')),
@@ -67,6 +81,7 @@ class AccountScreen extends StatelessWidget {
             OutlinedButton(onPressed: () => context.push('/login'), child: const Text('Sign in')),
           ]),
         ),
+        ...alerts,
         ...footer,
       ]);
     }
@@ -90,6 +105,7 @@ class AccountScreen extends StatelessWidget {
             value: user.briefEmails,
             onChanged: (v) => _setBriefEmails(context, v),
           ),
+          ...alerts,
           const SectionLabel('Topics you follow'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

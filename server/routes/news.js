@@ -6,6 +6,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const { machineLimiter, readLimiter } = require('../middleware/rateLimit');
 const { capabilitiesFor } = require('../utils/capabilities');
 const { normalizeItem, isValid, upsertNewsItems } = require('../utils/ingest');
+const { alertBreaking } = require('../utils/push');
 
 const router = express.Router();
 
@@ -31,7 +32,8 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
       return res.status(400).json({ error: 'Every item needs a title and a valid http(s) url', invalidCount });
     }
     const result = await upsertNewsItems(items);
-    res.json({ ok: true, received: items.length, inserted: result.upsertedCount, updated: result.modifiedCount });
+    const alerted = await alertBreaking({ url: { $in: items.map((i) => i.url) } });
+    res.json({ ok: true, received: items.length, inserted: result.upsertedCount, updated: result.modifiedCount, alerted });
   } catch (err) {
     console.error('ingest error:', err);
     res.status(500).json({ error: 'Failed to ingest items' });

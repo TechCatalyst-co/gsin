@@ -8,6 +8,7 @@ const NewsItem = require('../models/NewsItem');
 const DailyBrief = require('../models/DailyBrief');
 const requireAuth = require('../middleware/auth');
 const { adminSensitiveLimiter } = require('../middleware/rateLimit');
+const { alertBreaking } = require('../utils/push');
 
 const router = express.Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -118,6 +119,8 @@ router.patch('/news/:id', async (req, res) => {
     const item = await NewsItem.findByIdAndUpdate(id, update, { new: true }).lean();
     if (!item) return res.status(404).json({ error: 'Story not found' });
     await AdminAuditEvent.create({ actor: req.user._id, action: 'story.curated', after: { story: id, ...update } });
+    // Flagging breaking (or un-hiding a breaking story) sends the push alert.
+    if (item.urgent && !item.hidden && !item.alertedAt) await alertBreaking({ _id: item._id });
     res.json({ item });
   } catch (err) {
     console.error('admin news update error:', err);

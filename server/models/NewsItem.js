@@ -26,6 +26,8 @@ const newsItemSchema = new mongoose.Schema(
     // Curation (set by editors in the admin panel, never by n8n).
     featured: { type: Boolean, default: false, index: true },
     hidden: { type: Boolean, default: false, index: true },
+    // When the breaking-news push went out (utils/push.js). Set once.
+    alertedAt: { type: Date },
 
     // Denormalized count maintained by the comments routes.
     commentCount: { type: Number, default: 0 },
