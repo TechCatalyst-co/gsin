@@ -37,7 +37,9 @@ gsin/
 ├── client/    React 18 + Vite web app
 ├── mobile/    Flutter iOS/Android app
 ├── samples/   Sample stories and a daily brief (n8n payload shape)
-└── docs/N8N_API.md   The n8n contract
+└── docs/
+    ├── N8N_API.md   The n8n contract
+    └── ADS.md       Turning on ads (AdSense on web, AdMob in the app)
 ```
 
 ## Run it locally
@@ -55,7 +57,9 @@ npm run dev                     # http://localhost:4000
 # Web (second terminal)
 cd client
 npm install
+cp .env.example .env            # optional: ads settings
 npm run dev                     # http://localhost:5173
+VITE_ADS_PROVIDER=preview npm run dev   # same, with ad placeholders shown
 
 # Make yourself staff: register on the web, then
 cd server && npm run make-admin -- you@example.com admin
@@ -74,6 +78,20 @@ flutter run                       # Android emulator: --dart-define=API_BASE_URL
 
 Point your workflow's HTTP Request node at `POST {API}/api/news` with header `x-api-key: {API_KEY}`. Payloads from the old Helio workflow are accepted unchanged; RSS-style fields (`link`, `pubDate`, `description`) are also understood. Full contract and a suggested LLM step: [docs/N8N_API.md](docs/N8N_API.md).
 
+## API at a glance
+
+| Endpoint | Who | Purpose |
+| --- | --- | --- |
+| `POST /api/news` | n8n (`x-api-key`) | Push stories (upsert by URL) |
+| `POST /api/daily-brief` | n8n (`x-api-key`) | Push the morning brief |
+| `GET /api/subscribers` | n8n (`x-api-key`) | Accounts that want the brief email |
+| `GET /api/news`, `/api/news/front-page`, `/api/news/:slug` | Anyone | Feed, front page, story |
+| `GET /api/daily-brief/latest`, `/dates`, `/:date` | Anyone | The brief and its archive |
+| `GET /api/comments?newsItem=` / `POST /api/comments` | Anyone / signed in | Read / post discussion |
+| `/api/me/*` | Signed in | Saved stories, followed topics, brief-email preference |
+| `/api/admin/*` | Editors, admins | Curation, moderation, metrics, members |
+| `GET /api/public/rss`, `/api/public/sitemap.xml` | Anyone | RSS and sitemap |
+
 ## Configuration
 
 API (`server/.env`):
@@ -84,9 +102,9 @@ API (`server/.env`):
 | `JWT_SECRET`, `JWT_EXPIRES_IN` | Sessions |
 | `API_KEY` | Shared secret for n8n |
 | `CLIENT_URL` | Web origin: CORS, RSS/sitemap links |
-| `BRAND_NAME`, `BRAND_TAGLINE` | Used in RSS |
+| `BRAND_NAME`, `BRAND_SHORT`, `BRAND_TAGLINE` | Used in RSS (defaults: Global Super Intelligence News / GSIN) |
 
-Web: rename or re-color in `client/src/brand.js`; set `API_PROXY_TARGET` on Netlify. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
+Web (`client/.env`, or Netlify environment variables): `VITE_API_TARGET` for the dev proxy, `API_PROXY_TARGET` on Netlify, and the ad settings. Rename or re-color in `client/src/brand.js`. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
 
 Ads: `VITE_ADS_PROVIDER` and slot IDs on the web, `ADS_PROVIDER` in the app. See [docs/ADS.md](docs/ADS.md).
 
@@ -94,7 +112,8 @@ Ads: `VITE_ADS_PROVIDER` and slot IDs on the web, `ADS_PROVIDER` in the app. See
 
 - **API:** Render blueprint in `render.yaml` (or any Node host).
 - **Web:** Netlify (`netlify.toml`); `/api/*`, `/rss.xml`, and `/sitemap.xml` are proxied to the API.
-- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN".
+- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN". Before release, set the real `API_BASE_URL` / `WEB_BASE_URL` defaults in `mobile/lib/config.dart`.
+- **Before launch:** replace the placeholder domains (`client/scripts/gen-redirects.mjs`, `mobile/lib/config.dart`), have the Privacy and Terms templates reviewed, and swap in final icon art (`mobile/assets/icon`, `client/public/favicon.svg`).
 
 ## Tests
 
