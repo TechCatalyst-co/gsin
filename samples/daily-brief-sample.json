@@ -1,0 +1,70 @@
+{
+  "briefing_date": "October 15, 2026",
+  "window_start": "Wed Oct 14, 6:00 AM PT",
+  "window_end": "Thu Oct 15, 6:00 AM PT",
+  "summary": "Sample brief: a new frontier model claims reasoning gains, a lab pauses a rollout over a jailbreak, and lawmakers advance a compute-threshold licensing framework.",
+  "key_points": [
+    "Aurora-5 (sample) tops reasoning benchmarks \u2014 awaiting independent evals",
+    "Deployment paused after red-team finding",
+    "Licensing framework advances on compute thresholds"
+  ],
+  "stats_line": "10 stories in the last 24h",
+  "urgent_count": 2,
+  "app_items": [
+    {
+      "title": "Example Labs unveils Aurora-5, claiming new highs on reasoning benchmarks",
+      "url": "https://example.com/sample-news/1",
+      "source": "Example Wire",
+      "published": "2026-10-15T10:00:00.000Z",
+      "relevance": 94,
+      "category": "Frontier Models",
+      "urgent": true,
+      "headline": "A fictional frontier lab releases a model it says beats prior systems on math and coding evals.",
+      "impact": "If independent evals confirm the gains, competitors will face pressure to accelerate release schedules."
+    },
+    {
+      "title": "Researchers propose a scalable method for detecting deceptive behavior in language models",
+      "url": "https://example.com/sample-news/2",
+      "source": "Sample Times",
+      "published": "2026-10-15T07:00:00.000Z",
+      "relevance": 90,
+      "category": "Safety & Alignment",
+      "urgent": false,
+      "headline": "A new interpretability paper reports probes that flag deceptive reasoning with high accuracy.",
+      "impact": "Reliable deception detection would be a key ingredient for safely deploying more autonomous systems."
+    },
+    {
+      "title": "Lawmakers advance draft framework for licensing the most capable AI systems",
+      "url": "https://example.com/sample-news/3",
+      "source": "Demo Research Blog",
+      "published": "2026-10-15T04:00:00.000Z",
+      "relevance": 88,
+      "category": "Policy & Regulation",
+      "urgent": false,
+      "headline": "A fictional legislative committee moves forward a compute-threshold licensing proposal.",
+      "impact": "Thresholds tied to training compute could reshape where and how frontier models are built."
+    },
+    {
+      "title": "Startup raises $1.2B to build a dedicated AI training cluster",
+      "url": "https://example.com/sample-news/4",
+      "source": "Example Wire",
+      "published": "2026-10-15T01:00:00.000Z",
+      "relevance": 76,
+      "category": "Industry & Funding",
+      "urgent": false,
+      "headline": "A sample startup announces a major round to fund a new data center.",
+      "impact": "Capital continues to flow toward compute as the main bottleneck for frontier training."
+    },
+    {
+      "title": "New accelerator chip promises 3x efficiency for inference workloads",
+      "url": "https://example.com/sample-news/5",
+      "source": "Sample Times",
+      "published": "2026-10-14T22:00:00.000Z",
+      "relevance": 72,
+      "category": "Compute & Hardware",
+      "urgent": false,
+      "headline": "A fictional chipmaker details a new inference-focused accelerator.",
+      "impact": "Cheaper inference lowers the cost of deploying capable models widely."
+    }
+  ]
+}

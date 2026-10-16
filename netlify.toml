@@ -1,0 +1,10 @@
+# Web build for Singularity Wire (repo root).
+[build]
+base = "client"
+command = "npm run build"
+# Relative to `base`, so this is client/dist.
+publish = "dist"
+
+# Routing (/api/* proxy, /rss.xml, /sitemap.xml, SPA fallback) is written to
+# client/dist/_redirects at build time by client/scripts/gen-redirects.mjs.
+# Set API_PROXY_TARGET in Netlify to your API origin.
