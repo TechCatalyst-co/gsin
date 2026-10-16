@@ -4,7 +4,6 @@ import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND } from '../brand';
 import CategoryTag from '../components/CategoryTag';
-import SignalMeter from '../components/SignalMeter';
 import { useDocumentTitle } from './Home';
 
 const dayLabel = (ymd) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -17,7 +16,7 @@ export default function DailyBrief() {
   const [dates, setDates] = useState([]);
   const [error, setError] = useState('');
   const allowed = !!user?.capabilities?.accessDailyBrief;
-  useDocumentTitle(`Daily Brief — ${BRAND.name}`);
+  useDocumentTitle(`Daily Brief — ${BRAND.short}`);
 
   useEffect(() => {
     if (!allowed) return;
@@ -71,7 +70,6 @@ export default function DailyBrief() {
               {brief.items.map((i) => (
                 <li key={i.url} className="brief-item">
                   <div className="brief-item-top">
-                    <SignalMeter value={i.relevance} />
                     <CategoryTag name={i.category} />
                     {i.urgent && <span className="flag-breaking">Breaking</span>}
                   </div>

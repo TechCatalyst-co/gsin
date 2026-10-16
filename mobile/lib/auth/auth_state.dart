@@ -14,7 +14,7 @@ class AuthState extends ChangeNotifier {
   AuthState(this._api, {FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
-  static const _tokenKey = 'singularity_wire_token';
+  static const _tokenKey = 'gsin_token';
 
   // Floor on how long the branded splash stays up on launch, so a fast
   // (cached-token) auth check doesn't make it flash. Kept short so it never

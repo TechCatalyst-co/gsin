@@ -1,8 +1,8 @@
-# Publishing Singularity Wire to the App Store & Play Store
+# Publishing Global Super Intelligence News to the App Store & Play Store
 
-App identity (both stores): **Singularity Wire**, bundle/application ID **`co.techcatalyst.singularitywire`**, version from `pubspec.yaml` (`version: 0.1.0+1` → versionName 1.0.0, build number 1). Bump the `+N` build number on every store upload.
+App identity (both stores): **Global Super Intelligence News**, bundle/application ID **`co.techcatalyst.gsin`**, version from `pubspec.yaml` (`version: 0.1.0+1` → versionName 1.0.0, build number 1). Bump the `+N` build number on every store upload.
 
-Release builds default to the production API `https://singularity-wire-api.onrender.com` (see `lib/config.dart`); debug builds use `http://localhost:4000`. Override either with `--dart-define=API_BASE_URL=...`.
+Release builds default to the production API `https://gsin-api.onrender.com` (see `lib/config.dart`); debug builds use `http://localhost:4000`. Override either with `--dart-define=API_BASE_URL=...`.
 
 ## 0. Prerequisites (one-time, has lead times — start early)
 
@@ -39,7 +39,7 @@ keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | h
 ```
 
 In Play Console:
-1. Create app → name "Singularity Wire", default language, app/game, free/paid.
+1. Create app → name "Global Super Intelligence News", default language, app/game, free/paid.
 2. Complete **Data safety** form: declare collection of email address + authentication credentials (account management), encrypted in transit, not shared with third parties.
 3. Complete the **content rating** questionnaire.
 4. Set the **privacy policy URL**.
@@ -68,7 +68,7 @@ flutter build ipa --release
 Upload with Xcode Organizer (Product → Archive → Distribute App) or drag the .ipa into the **Transporter** app.
 
 In App Store Connect (<https://appstoreconnect.apple.com>):
-1. Create the app record: platform iOS, bundle ID `co.techcatalyst.singularitywire`, SKU e.g. `singularity-wire-001`.
+1. Create the app record: platform iOS, bundle ID `co.techcatalyst.gsin`, SKU e.g. `gsin-001`.
 2. Fill **App Privacy** (nutrition labels): collects email + user ID for app functionality/account, linked to identity, not used for tracking.
 3. Set the **privacy policy URL**.
 4. Add screenshots: 6.9" iPhone required (6.7" also accepted). The app targets iPhone; skip iPad screenshots if you set the app to iPhone-only.

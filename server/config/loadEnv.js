@@ -46,7 +46,7 @@ if (process.env.MONGODB_URI && !hasDbName) {
   throw new Error(
     'Refusing to start: MONGODB_URI has no database name in its path, so ' +
       'Mongoose would silently use the default "test" DB. Add the name, e.g. ' +
-      '"…mongodb.net/singularity-wire?…".'
+      '"…mongodb.net/gsin?…".'
   );
 }
 
@@ -58,7 +58,7 @@ if (/^test$/i.test(dbName)) {
   throw new Error(
     'Refusing to start: MONGODB_URI names the "test" database. That is ' +
       "Mongoose's default fallback, not a real database for this app. Point it " +
-      'at "singularity-wire" (or "singularity-wire-staging").'
+      'at "gsin" (or "gsin-staging").'
   );
 }
 

@@ -51,6 +51,15 @@ test('ingest: accepts RSS-style aliases (link, pubDate, description)', async () 
   assert.equal(doc.published.toISOString(), '2026-10-14T10:00:00.000Z');
 });
 
+test('relevance is not required and is ignored if sent', async () => {
+  await request(app).post('/api/news').set(KEY)
+    .send({ title: 'Legacy payload', url: 'https://example.com/legacy', relevance: 95 }).expect(200);
+  const doc = await NewsItem.findOne({ url: 'https://example.com/legacy' }).lean();
+  assert.equal(doc.relevance, undefined);
+  const res = await request(app).get('/api/news/' + doc.slug).expect(200);
+  assert.equal(res.body.item.relevance, undefined);
+});
+
 test('partial re-ingest does not blank fields or reset curation', async () => {
   const doc = await NewsItem.findOne({ url: sample[1].url });
   doc.featured = true;
@@ -184,7 +193,7 @@ test('auth/me exposes capabilities; register works', async () => {
 test('public: RSS, sitemap, share preview; subscribers for n8n', async () => {
   const rss = await request(app).get('/api/public/rss').expect(200);
   assert.match(rss.headers['content-type'], /rss\+xml/);
-  assert.match(rss.text, /<title>Singularity Wire<\/title>/);
+  assert.match(rss.text, /<title>Global Super Intelligence News<\/title>/);
   assert.match(rss.text, /news\.example\.com\/story\//);
   const map = await request(app).get('/api/public/sitemap.xml').expect(200);
   assert.match(map.text, /<urlset/);

@@ -16,7 +16,7 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-const PROD_API = 'https://singularity-wire-api.onrender.com';
+const PROD_API = 'https://gsin-api.onrender.com';
 const target = (process.env.API_PROXY_TARGET || PROD_API).replace(/\/+$/, '');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -11,7 +11,6 @@ const briefItemSchema = new mongoose.Schema(
     url: { type: String, required: true },
     source: { type: String, default: 'RSS' },
     published: { type: Date },
-    relevance: { type: Number, min: 0, max: 100, default: 0 },
     category: { type: String },
     urgent: { type: Boolean, default: false },
     impact: { type: String, trim: true },

@@ -4,7 +4,6 @@
     "url": "https://example.com/sample-news/1",
     "source": "Example Wire",
     "published": "2026-10-15T10:00:00.000Z",
-    "relevance": 94,
     "category": "Frontier Models",
     "tags": [
       "llm",
@@ -23,7 +22,6 @@
     "url": "https://example.com/sample-news/2",
     "source": "Sample Times",
     "published": "2026-10-15T07:00:00.000Z",
-    "relevance": 90,
     "category": "Safety & Alignment",
     "tags": [
       "interpretability",
@@ -41,7 +39,6 @@
     "url": "https://example.com/sample-news/3",
     "source": "Demo Research Blog",
     "published": "2026-10-15T04:00:00.000Z",
-    "relevance": 88,
     "category": "Policy & Regulation",
     "tags": [
       "regulation",
@@ -58,7 +55,6 @@
     "url": "https://example.com/sample-news/4",
     "source": "Example Wire",
     "published": "2026-10-15T01:00:00.000Z",
-    "relevance": 76,
     "category": "Industry & Funding",
     "tags": [
       "funding",
@@ -75,7 +71,6 @@
     "url": "https://example.com/sample-news/5",
     "source": "Sample Times",
     "published": "2026-10-14T22:00:00.000Z",
-    "relevance": 72,
     "category": "Compute & Hardware",
     "tags": [
       "chips",
@@ -92,7 +87,6 @@
     "url": "https://example.com/sample-news/6",
     "source": "Demo Research Blog",
     "published": "2026-10-14T18:00:00.000Z",
-    "relevance": 80,
     "category": "Open Source",
     "tags": [
       "open-weights",
@@ -109,7 +103,6 @@
     "url": "https://example.com/sample-news/7",
     "source": "Example Wire",
     "published": "2026-10-14T14:00:00.000Z",
-    "relevance": 84,
     "category": "Superintelligence",
     "tags": [
       "agi",
@@ -128,7 +121,6 @@
     "url": "https://example.com/sample-news/8",
     "source": "Sample Times",
     "published": "2026-10-14T10:00:00.000Z",
-    "relevance": 70,
     "category": "Robotics",
     "tags": [
       "robotics",
@@ -145,7 +137,6 @@
     "url": "https://example.com/sample-news/9",
     "source": "Demo Research Blog",
     "published": "2026-10-15T11:00:00.000Z",
-    "relevance": 96,
     "category": "Safety & Alignment",
     "tags": [
       "red-teaming",
@@ -162,7 +153,6 @@
     "url": "https://example.com/sample-news/10",
     "source": "Example Wire",
     "published": "2026-10-14T06:00:00.000Z",
-    "relevance": 86,
     "category": "Research",
     "tags": [
       "agents",

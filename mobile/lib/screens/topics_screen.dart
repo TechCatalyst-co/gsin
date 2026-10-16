@@ -59,7 +59,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
   }
 }
 
-const _sorts = [('latest', 'Latest'), ('relevance', 'Biggest signal'), ('discussed', 'Most discussed')];
+const _sorts = [('latest', 'Latest'), ('discussed', 'Most discussed')];
 
 /// A filtered feed: one topic, a search, or a tag.
 class FeedScreen extends StatefulWidget {

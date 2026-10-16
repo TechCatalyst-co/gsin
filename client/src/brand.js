@@ -1,8 +1,8 @@
 // One place to rename or re-theme the outlet on the web.
 export const BRAND = {
-  name: 'Singularity Wire',
-  short: 'SW',
-  tagline: 'Daily news on artificial intelligence and the road to superintelligence.',
+  name: 'Global Super Intelligence News',
+  short: 'GSIN',
+  tagline: 'News on artificial intelligence and the road to superintelligence, from around the world.',
   premiumPrice: '$8',
   supportEmail: 'support@example.com',
 };

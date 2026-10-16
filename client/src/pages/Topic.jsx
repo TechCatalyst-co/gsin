@@ -7,7 +7,6 @@ import { useDocumentTitle } from './Home';
 
 const SORTS = [
   { key: 'latest', label: 'Latest' },
-  { key: 'relevance', label: 'Biggest signal' },
   { key: 'discussed', label: 'Most discussed' },
 ];
 
@@ -68,7 +67,7 @@ export default function Topic() {
   // Unknown desks (any category n8n sends) carry their exact name in ?name=.
   const name = categoryFromSlug(slug) || params.get('name') || slug.replace(/-/g, ' ');
   const meta = categoryMeta(name);
-  useDocumentTitle(`${meta.name} — ${BRAND.name}`);
+  useDocumentTitle(`${meta.name} — ${BRAND.short}`);
   return (
     <FeedPage
       key={slug}
@@ -83,7 +82,7 @@ export function Search() {
   const [params] = useSearchParams();
   const q = params.get('q') || '';
   const tag = params.get('tag') || '';
-  useDocumentTitle(`${q ? `“${q}”` : tag ? `#${tag}` : 'All stories'} — ${BRAND.name}`);
+  useDocumentTitle(`${q ? `“${q}”` : tag ? `#${tag}` : 'All stories'} — ${BRAND.short}`);
   const query = {};
   if (q) query.search = q;
   if (tag) query.tag = tag;

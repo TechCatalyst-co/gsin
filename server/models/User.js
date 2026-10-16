@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Singularity Wire has two audiences: anonymous/free readers (who can read the
+// Global Super Intelligence News has two audiences: anonymous/free readers (who can read the
 // whole news feed) and Premium members (Daily Brief, deep analysis, and
 // posting in discussions). Accounts are free; Premium is a Stripe subscription
 // or an admin-granted override.

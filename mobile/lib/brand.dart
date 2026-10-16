@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 /// One place to rename or re-theme the outlet in the app. Mirrors
 /// client/src/brand.js.
 abstract class Brand {
-  static const name = 'Singularity Wire';
+  static const name = 'Global Super Intelligence News';
+  static const short = 'GSIN';
   static const tagline =
-      'Daily news on artificial intelligence and the road to superintelligence.';
+      'News on artificial intelligence and the road to superintelligence, from around the world.';
   static const premiumPrice = r'$8';
 }
 

@@ -11,7 +11,6 @@ const newsItemSchema = new mongoose.Schema(
     source: { type: String, default: 'RSS' },
     author: { type: String, trim: true },
     published: { type: Date, required: true, index: true },
-    relevance: { type: Number, min: 0, max: 100, default: 0, index: true },
     category: { type: String, index: true },
     tags: { type: [String], default: [], index: true },
     imageUrl: { type: String },
@@ -34,7 +33,7 @@ const newsItemSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-newsItemSchema.index({ category: 1, published: -1, relevance: -1 });
+newsItemSchema.index({ category: 1, published: -1 });
 newsItemSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('NewsItem', newsItemSchema);

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import CategoryTag from './CategoryTag';
-import SignalMeter from './SignalMeter';
 import { storyPath, timeAgo } from '../format';
 
 function Meta({ item, showCategory = true }) {
@@ -20,10 +19,7 @@ export function StoryLead({ item }) {
   return (
     <article className="lead">
       <div className="lead-text">
-        <div className="lead-signal">
-          <SignalMeter value={item.relevance} size="lg" />
-          {item.urgent && <span className="flag-breaking">Breaking</span>}
-        </div>
+        {item.urgent && <div className="lead-flags"><span className="flag-breaking">Breaking</span></div>}
         <h1 className="lead-title"><Link to={storyPath(item)}>{item.title}</Link></h1>
         {(item.headline || item.summary) && <p className="lead-dek">{item.headline || item.summary}</p>}
         <Meta item={item} />
@@ -37,11 +33,10 @@ export function StoryLead({ item }) {
   );
 }
 
-// Standard row in a list: signal meter in the gutter, thumbnail on the right.
+// Standard row in a list: text on the left, thumbnail on the right.
 export function StoryRow({ item, showCategory = true, compact = false }) {
   return (
     <article className={`row${compact ? ' row--compact' : ''}`}>
-      <SignalMeter value={item.relevance} />
       <div className="row-text">
         <h3 className="row-title">
           {item.urgent && <span className="flag-breaking">Breaking</span>}

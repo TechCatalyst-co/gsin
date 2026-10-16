@@ -8,7 +8,6 @@ class NewsItem {
     required this.source,
     this.author,
     this.published,
-    required this.relevance,
     this.category,
     this.tags = const [],
     this.imageUrl,
@@ -31,7 +30,6 @@ class NewsItem {
   final String source;
   final String? author;
   final DateTime? published;
-  final int relevance;
   final String? category;
   final List<String> tags;
   final String? imageUrl;
@@ -67,7 +65,6 @@ class NewsItem {
         source: source,
         author: author,
         published: published,
-        relevance: relevance,
         category: category,
         tags: tags,
         imageUrl: imageUrl,
@@ -91,7 +88,6 @@ class NewsItem {
         source: (j['source'] as String?) ?? 'RSS',
         author: j['author'] as String?,
         published: j['published'] != null ? DateTime.tryParse(j['published'] as String) : null,
-        relevance: ((j['relevance'] as num?) ?? 0).round().clamp(0, 100),
         category: j['category'] as String?,
         tags: ((j['tags'] as List?) ?? const []).whereType<String>().toList(),
         imageUrl: j['imageUrl'] as String?,
@@ -122,7 +118,6 @@ class BriefItem {
     this.headline,
     this.impact,
     this.category,
-    this.relevance = 0,
     this.urgent = false,
     this.commentCount = 0,
   });
@@ -133,7 +128,6 @@ class BriefItem {
   final String? headline;
   final String? impact;
   final String? category;
-  final int relevance;
   final bool urgent;
   final int commentCount;
 
@@ -144,7 +138,6 @@ class BriefItem {
         headline: j['headline'] as String?,
         impact: j['impact'] as String?,
         category: j['category'] as String?,
-        relevance: ((j['relevance'] as num?) ?? 0).round().clamp(0, 100),
         urgent: (j['urgent'] as bool?) ?? false,
         commentCount: ((j['commentCount'] as num?) ?? 0).round(),
       );

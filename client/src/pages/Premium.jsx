@@ -14,7 +14,7 @@ export default function Premium() {
   const [params] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  useDocumentTitle(`Premium — ${BRAND.name}`);
+  useDocumentTitle(`Premium — ${BRAND.short}`);
 
   const subscribe = async () => {
     if (!user) return nav('/register?next=premium');

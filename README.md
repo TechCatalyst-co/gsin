@@ -1,6 +1,6 @@
-<h1>Singularity Wire</h1>
+<h1>Global Super Intelligence News (GSIN)</h1>
 
-A news outlet for artificial intelligence and the road to superintelligence. An **n8n** workflow gathers, summarizes, and scores stories; this platform publishes them on the **web** and in an **iOS/Android app**, with a free reading experience and an optional **Premium** membership.
+A news outlet for artificial intelligence and the road to superintelligence. An **n8n** workflow gathers and summarizes stories; this platform publishes them on the **web** and in an **iOS/Android app**, with a free reading experience and an optional **Premium** membership.
 
 Forked from the Helio Intelligence Platform: the Express/MongoDB API, auth, Stripe billing, n8n ingest, daily brief, comments, moderation, and admin tooling were kept and reshaped; the expert-review roles, journals, and referral program were removed.
 
@@ -21,7 +21,7 @@ Set `COMMENTS_FREE=true` on the API to let free accounts post too. Staff roles: 
 
 ```mermaid
 flowchart LR
-    Sources["RSS, arXiv, lab blogs"] --> N8N["n8n: fetch, dedupe, LLM summarize + score"]
+    Sources["RSS, arXiv, lab blogs"] --> N8N["n8n: fetch, dedupe, LLM summarize"]
     N8N -->|"POST /api/news, /api/daily-brief"| API["Express API (server/)"]
     API --> Mongo[(MongoDB)]
     API <--> Stripe["Stripe (Premium)"]
@@ -31,7 +31,7 @@ flowchart LR
 ```
 
 ```text
-singularity-wire/
+gsin/
 ├── server/    Express + Mongoose API, tests
 ├── client/    React 18 + Vite web app
 ├── mobile/    Flutter iOS/Android app
@@ -79,7 +79,7 @@ API (`server/.env`):
 
 | Variable | Purpose |
 | --- | --- |
-| `MONGODB_URI` | Must include a database name, e.g. `…/singularity-wire` |
+| `MONGODB_URI` | Must include a database name, e.g. `…/gsin` |
 | `JWT_SECRET`, `JWT_EXPIRES_IN` | Sessions |
 | `API_KEY` | Shared secret for n8n |
 | `CLIENT_URL` | Web origin: CORS, Stripe return URLs, RSS/sitemap links |
@@ -93,7 +93,7 @@ Web: rename or re-color in `client/src/brand.js`; set `API_PROXY_TARGET` on Netl
 
 - **API:** Render blueprint in `render.yaml` (or any Node host). Create a Stripe webhook to `/api/billing/webhook` for `checkout.session.completed` and `customer.subscription.*`.
 - **Web:** Netlify (`netlify.toml`); `/api/*`, `/rss.xml`, and `/sitemap.xml` are proxied to the API.
-- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.singularitywire`. Premium is purchased on the web (App Store 3.1.1); build with `--dart-define=SHOW_UPGRADE_LINKS=false` if review requires removing the link-out.
+- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN". Premium is purchased on the web (App Store 3.1.1); build with `--dart-define=SHOW_UPGRADE_LINKS=false` if review requires removing the link-out.
 
 ## Tests
 
@@ -106,4 +106,4 @@ cd mobile && flutter analyze && flutter test
 
 ## Design
 
-Cool "clean room" paper, indigo ink, one electric ultramarine for signal, and flare red reserved for breaking news. Bricolage Grotesque for headlines and UI, Newsreader for reading text. The signature element is the five-bar **signal meter** that shows each story's relevance score from n8n. Tokens live at the top of `client/src/styles.css` and in `mobile/lib/theme/app_theme.dart`; both support dark mode.
+Cool "clean room" paper, indigo ink, one electric ultramarine accent, and flare red reserved for breaking news. Bricolage Grotesque for headlines and UI, Newsreader for reading text. The signature element is the **GSIN lockup**: the exponential-curve mark, a heavy condensed "GSIN", and the full name set small beside it. Tokens live at the top of `client/src/styles.css` and in `mobile/lib/theme/app_theme.dart`; both support dark mode.

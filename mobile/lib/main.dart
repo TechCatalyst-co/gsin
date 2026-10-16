@@ -17,7 +17,7 @@ void main() {
         Provider<ApiClient>.value(value: api),
         ChangeNotifierProvider.value(value: auth),
       ],
-      child: SingularityWireApp(auth: auth),
+      child: GsinApp(auth: auth),
     ),
   );
 }

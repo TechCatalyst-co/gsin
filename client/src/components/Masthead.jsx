@@ -23,7 +23,7 @@ export default function Masthead() {
   return (
     <header className="masthead">
       <div className="masthead-top shell">
-        <Link to="/" className="masthead-brand" aria-label="Singularity Wire home"><Wordmark /></Link>
+        <Link to="/" className="masthead-brand" aria-label="Global Super Intelligence News home"><Wordmark /></Link>
         <span className="masthead-date">{today}</span>
         <form className="masthead-search" onSubmit={search} role="search">
           <input type="search" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} />

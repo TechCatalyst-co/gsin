@@ -39,45 +39,6 @@ Future<bool> openPremiumOnWeb(String? upgradeUrl) async {
   return true;
 }
 
-/// Relevance (0–100) as five rising bars — the outlet's signature mark.
-class SignalMeter extends StatelessWidget {
-  const SignalMeter({super.key, required this.value, this.large = false});
-
-  final int value;
-  final bool large;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final filled = (value / 20).round().clamp(0, 5);
-    final h = large ? 22.0 : 16.0;
-    final w = large ? 6.0 : 4.0;
-    const labels = ['Background', 'Low signal', 'Notable', 'Significant', 'Major', 'Landmark'];
-    return Semantics(
-      label: labels[filled],
-      child: SizedBox(
-        height: h,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var i = 1; i <= 5; i++)
-              Container(
-                width: w,
-                height: h * (0.2 + i * 0.16),
-                margin: EdgeInsets.only(right: i == 5 ? 0 : (large ? 3 : 2)),
-                decoration: BoxDecoration(
-                  color: i <= filled ? p.signal : p.lineStrong,
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class CategoryLabel extends StatelessWidget {
   const CategoryLabel({super.key, required this.name, this.tappable = true});
 
@@ -187,11 +148,7 @@ class LeadStory extends StatelessWidget {
           children: [
             StoryImage(url: item.imageUrl),
             if (item.imageUrl != null) const SizedBox(height: 16),
-            Row(children: [
-              SignalMeter(value: item.relevance, large: true),
-              if (item.urgent) ...[const SizedBox(width: 10), const BreakingFlag()],
-            ]),
-            const SizedBox(height: 12),
+            if (item.urgent) ...[const BreakingFlag(), const SizedBox(height: 12)],
             Text(item.title, style: display(size: 30, weight: FontWeight.w800, color: p.ink, height: 1.05)),
             if (item.dek != null) ...[
               const SizedBox(height: 10),
@@ -206,7 +163,7 @@ class LeadStory extends StatelessWidget {
   }
 }
 
-/// Standard list row: signal meter in the gutter, thumbnail on the right.
+/// Standard list row: text on the left, thumbnail on the right.
 class StoryTile extends StatelessWidget {
   const StoryTile({super.key, required this.item, this.showCategory = true, this.compact = false});
 
@@ -226,8 +183,6 @@ class StoryTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(padding: const EdgeInsets.only(top: 4), child: SignalMeter(value: item.relevance)),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,19 +286,37 @@ class _CurvePainter extends CustomPainter {
   bool shouldRepaint(covariant _CurvePainter old) => old.p != p;
 }
 
+/// "GSIN" set heavy, with the full name beside it as a two-line lockup.
 class Wordmark extends StatelessWidget {
-  const Wordmark({super.key, this.size = 20});
+  const Wordmark({super.key, this.size = 22, this.full = true});
   final double size;
+  final bool full;
 
   @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CurveGlyph(size: size * 1.2),
-          const SizedBox(width: 8),
-          Text(Brand.name, style: display(size: size, weight: FontWeight.w800, color: context.palette.ink)),
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CurveGlyph(size: size * 1.1),
+        const SizedBox(width: 8),
+        Text(Brand.short, style: display(size: size, weight: FontWeight.w800, color: p.ink, height: 1)),
+        if (full) ...[
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.only(left: 8),
+            decoration: BoxDecoration(border: Border(left: BorderSide(color: p.signal, width: 2))),
+            child: Text(
+              // Two balanced lines: "Global Super" / "Intelligence News"
+              '${Brand.name.split(' ').take(2).join(' ')}\n${Brand.name.split(' ').skip(2).join(' ')}',
+              maxLines: 2,
+              style: display(size: size * 0.42, weight: FontWeight.w600, color: p.ink2, height: 1.15),
+            ),
+          ),
         ],
-      );
+      ],
+    );
+  }
 }
 
 /// Inline pitch shown where a Premium feature would be.

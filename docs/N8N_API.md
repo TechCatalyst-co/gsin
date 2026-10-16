@@ -1,10 +1,10 @@
 # n8n integration API
 
-The contract between **n8n** (gathering, summarizing, scoring AI/SI news) and the **Singularity Wire API**. n8n pushes stories and a daily brief in; it pulls subscriber lists out to send email.
+The contract between **n8n** (gathering and summarizing AI/SI news) and the **Global Super Intelligence News API**. n8n pushes stories and a daily brief in; it pulls subscriber lists out to send email.
 
 ```mermaid
 flowchart LR
-    Sources["RSS, arXiv, lab blogs, X lists"] --> N8N["n8n: fetch → dedupe → LLM summarize/score"]
+    Sources["RSS, arXiv, lab blogs, X lists"] --> N8N["n8n: fetch → dedupe → LLM summarize"]
     N8N -->|"POST /api/news (every run)"| API["Express API"]
     N8N -->|"POST /api/daily-brief (each morning)"| API
     API -->|"GET /api/subscribers"| N8N
@@ -43,7 +43,6 @@ Body: one object or an array.
 | `published` | ISO date / RFC 822 | no | Aliases: `pubDate`, `isoDate`, `published_at`. Defaults to ingest time on first insert. |
 | `category` | string | no | One desk per story; see list below. Unknown values still display with a neutral color. |
 | `tags` | string[] or comma string | no | Lower-cased, max 12. Power `#tag` pages and "Trending". |
-| `relevance` | number 0–100 | no | Drives the five-bar signal meter and "Biggest signal" sort. |
 | `urgent` | boolean | no | Breaking. Shows in the red bar for 24 h. Alias: `breaking`. |
 | `headline` | string | no | One-line dek under the title. |
 | `summary` | string | no | 2–4 sentence free summary. Aliases: `description`, `contentSnippet`. |
@@ -72,7 +71,9 @@ curl -X POST "$API/api/news" \
 
 ### Suggested LLM step in n8n
 
-Ask the model to return, per item: `category` (one of the desks), `tags` (3–6), `relevance` (0–100, where 90+ is a landmark event), `urgent` (true only for major, time-sensitive news), `headline` (≤ 20 words), `summary` (2–4 sentences), `impact` (1–2 sentences), and optionally `analysis` (3–6 short paragraphs) for items with relevance ≥ 80.
+Ask the model to return, per item: `category` (one of the desks), `tags` (3–6), `urgent` (true only for major, time-sensitive news), `headline` (≤ 20 words), `summary` (2–4 sentences), `impact` (1–2 sentences), and optionally `analysis` (3–6 short paragraphs) for the most significant stories.
+
+No relevance score is needed. If an older workflow still sends `relevance`, it is ignored.
 
 ---
 
@@ -116,7 +117,7 @@ No key needed.
 
 | Endpoint | Use |
 | --- | --- |
-| `GET /api/news?category=&tag=&search=&since=&sort=latest\|relevance\|discussed&page=&limit=` | The feed. |
+| `GET /api/news?category=&tag=&search=&since=&sort=latest\|discussed&page=&limit=` | The feed. |
 | `GET /api/news/front-page` | Breaking, lead, picks, latest, most discussed. |
 | `GET /api/news/:slugOrId` | One story plus related. |
 | `GET /api/public/rss[?category=]` | RSS 2.0 of the latest 50 stories (also at `/rss.xml` on the web host). |
@@ -127,5 +128,5 @@ No key needed.
 The old `POST /api/news` and `POST /api/daily-brief` payloads are accepted unchanged. To switch a copied Helio workflow over:
 
 1. Point both HTTP Request nodes at the new API URL and new `API_KEY`.
-2. Change the LLM prompt's category list to the desks above and ask for `tags`, `summary`, and (optionally) `analysis`.
+2. Change the LLM prompt's category list to the desks above and ask for `tags`, `summary`, and (optionally) `analysis`. You can drop the relevance scoring step.
 3. Drop the counsel/trainer/medical branches and the review-published webhook; this outlet has no expert-review flow.

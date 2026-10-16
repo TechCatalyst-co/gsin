@@ -69,7 +69,6 @@ function mapItem(raw) {
     url: raw.url,
     source: raw.source || 'RSS',
     published: raw.published ? new Date(raw.published) : undefined,
-    relevance: raw.relevance,
     category: raw.category,
     urgent: !!raw.urgent,
     impact: raw.impact,

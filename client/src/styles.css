@@ -1,8 +1,8 @@
-/* Singularity Wire — web
+/* Global Super Intelligence News (GSIN) — web
    Identity: cool "clean room" paper, indigo ink, one electric ultramarine for
    signal, flare red reserved for breaking news. Bricolage Grotesque carries
    headlines and UI; Newsreader carries reading text. The signature element is
-   the five-bar signal meter that encodes each story's relevance. */
+   the GSIN lockup with its exponential-curve mark. */
 
 :root {
   --paper: #f1f3f7;
@@ -120,9 +120,14 @@ p { margin: 0 0 1em; }
 .masthead-menu { display: none; }
 
 .wordmark { display: inline-flex; align-items: center; gap: 10px; }
-.wordmark-text {
-  font-family: var(--display); font-weight: 800; font-size: 26px;
-  font-stretch: 75%; font-variation-settings: 'wdth' 75; letter-spacing: -0.02em;
+.wordmark-short {
+  font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1;
+  font-stretch: 75%; font-variation-settings: 'wdth' 75; letter-spacing: 0.01em;
+}
+.wordmark-full {
+  display: flex; flex-direction: column; white-space: nowrap;
+  padding-left: 10px; border-left: 2px solid var(--signal);
+  font-size: 12.5px; font-weight: 600; line-height: 1.15; color: var(--ink-2);
 }
 .glyph-axis { stroke: var(--line-strong); stroke-width: 2; fill: none; }
 .glyph-curve { stroke: var(--signal); stroke-width: 3; fill: none; stroke-linecap: round; }
@@ -151,13 +156,6 @@ p { margin: 0 0 1em; }
 .pulse { width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: pulse 1.6s ease-out infinite; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.8); } 100% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
 
-/* --------------------------------------------------------- signal meter */
-.signal { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex: none; }
-.signal span { width: 4px; border-radius: 1px; background: var(--line-strong); }
-.signal span.on { background: var(--signal); }
-.signal--lg { height: 22px; gap: 3px; }
-.signal--lg span { width: 6px; }
-
 .flag-breaking {
   display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px;
   background: var(--flare); color: #fff; font-size: 12px; font-weight: 700; vertical-align: 2px;
@@ -175,7 +173,7 @@ p { margin: 0 0 1em; }
   display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px;
   padding: 40px 0 36px; border-bottom: 1px solid var(--line); align-items: center;
 }
-.lead-signal { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.lead-flags { margin-bottom: 18px; }
 .lead-title {
   font-weight: 800; font-size: clamp(34px, 5.2vw, 64px); line-height: 0.98;
   font-stretch: 80%; font-variation-settings: 'wdth' 80; letter-spacing: -0.025em;
@@ -190,16 +188,15 @@ p { margin: 0 0 1em; }
 .section-h { font-size: 15px; font-weight: 700; color: var(--slate); margin: 0 0 12px; letter-spacing: 0.01em; }
 .picks { margin-bottom: 32px; }
 .picks-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.picks-grid .row { border: 0; background: var(--surface); border-radius: var(--radius-m); padding: 16px; grid-template-columns: auto 1fr; }
+.picks-grid .row { border: 0; background: var(--surface); border-radius: var(--radius-m); padding: 16px; grid-template-columns: 1fr; }
 .more-link { display: inline-block; margin-top: 20px; font-weight: 600; }
 
 /* --------------------------------------------------------------- rows */
 .rows { display: flex; flex-direction: column; }
 .row {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px;
   padding: 20px 0; border-bottom: 1px solid var(--line); align-items: start;
 }
-.row .signal { margin-top: 6px; }
 .row-title { font-size: 21px; font-weight: 700; line-height: 1.2; margin-bottom: 6px; text-wrap: pretty; }
 .row--compact .row-title { font-size: 17px; }
 .row-title a { text-decoration: none; }
@@ -418,7 +415,8 @@ input[type='search'] { font: inherit; color: var(--ink); }
   .masthead-top { grid-template-columns: 1fr auto; padding-top: 12px; padding-bottom: 12px; }
   .masthead-search, .masthead-account { display: none; }
   .masthead-menu { display: inline-flex; border: 1px solid var(--line-strong); background: none; border-radius: 999px; padding: 6px 14px; font-weight: 600; cursor: pointer; }
-  .wordmark-text { font-size: 22px; }
+  .wordmark-short { font-size: 26px; }
+  .wordmark-full { font-size: 11px; }
   .desks { display: none; }
   .desks.open { display: block; }
   .desks-row { flex-direction: column; overflow: visible; padding-top: 12px; padding-bottom: 16px; }
@@ -431,7 +429,7 @@ input[type='search'] { font: inherit; color: var(--ink); }
   .lead { grid-template-columns: 1fr; gap: 20px; padding: 24px 0; }
   .lead-media { order: -1; }
   .lead-dek { font-size: 19px; }
-  .row { grid-template-columns: auto minmax(0, 1fr); }
+  .row { grid-template-columns: minmax(0, 1fr); }
   .row-thumb { display: none; }
   .row-title { font-size: 19px; }
   .plans { grid-template-columns: 1fr; }

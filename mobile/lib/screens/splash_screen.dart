@@ -22,7 +22,9 @@ class SplashScreen extends StatelessWidget {
               children: [
                 const CurveGlyph(size: 72),
                 const SizedBox(height: 20),
-                Text(Brand.name, style: display(size: 30, weight: FontWeight.w800, color: p.ink)),
+                Text(Brand.short, style: display(size: 44, weight: FontWeight.w800, color: p.ink, height: 1)),
+                const SizedBox(height: 6),
+                Text(Brand.name, textAlign: TextAlign.center, style: display(size: 17, weight: FontWeight.w600, color: p.ink2)),
                 const SizedBox(height: 8),
                 Text(
                   Brand.tagline,

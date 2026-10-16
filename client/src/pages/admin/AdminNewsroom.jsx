@@ -56,7 +56,7 @@ export default function AdminNewsroom() {
       <p className="muted small">Picks lead the front page. Breaking shows in the red bar for 24 hours. Hidden stories are removed from every public view; n8n re-ingests never unhide them.</p>
       <div className="table-wrap">
         <table className="admin-table">
-          <thead><tr><th>Story</th><th>Topic</th><th>Signal</th><th>Pick</th><th>Breaking</th><th>Hidden</th></tr></thead>
+          <thead><tr><th>Story</th><th>Topic</th><th>Pick</th><th>Breaking</th><th>Hidden</th></tr></thead>
           <tbody>
             {items.map((i) => (
               <tr key={i._id} className={i.hidden ? 'is-hidden' : ''}>
@@ -65,7 +65,6 @@ export default function AdminNewsroom() {
                   <div className="muted small">{i.source}, {timeAgo(i.published)}{i.commentCount ? `, ${i.commentCount} comments` : ''}</div>
                 </td>
                 <td>{i.category || <span className="muted">None</span>}</td>
-                <td>{i.relevance ?? 0}</td>
                 {['featured', 'urgent', 'hidden'].map((k) => (
                   <td key={k}>
                     <input type="checkbox" aria-label={`${k} ${i.title}`} checked={!!i[k]} disabled={busy === i._id} onChange={(e) => patch(i, { [k]: e.target.checked })} />

@@ -9,7 +9,7 @@ export default function Saved() {
   const [saved, setSaved] = useState(null);
   const [forYou, setForYou] = useState(null);
   const [error, setError] = useState('');
-  useDocumentTitle(`Saved — ${BRAND.name}`);
+  useDocumentTitle(`Saved — ${BRAND.short}`);
 
   useEffect(() => {
     api('/me/bookmarks').then((d) => setSaved(d.items)).catch((e) => setError(e.message));

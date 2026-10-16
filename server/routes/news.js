@@ -42,11 +42,11 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
 });
 
 // GET /api/news — PUBLIC feed. Filters: category, tag, urgent, featured,
-// minRelevance, search, since (ISO date). sort=latest|relevance|discussed.
+// search, since (ISO date). sort=latest|discussed.
 router.get('/', readLimiter, optionalAuth, async (req, res) => {
   try {
     const caps = capabilitiesFor(req.user);
-    const { category, tag, urgent, featured, minRelevance, search, since, sort = 'latest', page = 1, limit = 30 } = req.query;
+    const { category, tag, urgent, featured, search, since, sort = 'latest', page = 1, limit = 30 } = req.query;
 
     const filter = {};
     if (!caps.curate || req.query.includeHidden !== 'true') filter.hidden = { $ne: true };
@@ -54,7 +54,6 @@ router.get('/', readLimiter, optionalAuth, async (req, res) => {
     if (tag) filter.tags = String(tag).toLowerCase();
     if (urgent === 'true') filter.urgent = true;
     if (featured === 'true') filter.featured = true;
-    if (minRelevance) filter.relevance = { $gte: Number(minRelevance) };
     if (since) {
       const d = new Date(since);
       if (!Number.isNaN(d.getTime())) filter.published = { $gte: d };
@@ -66,11 +65,9 @@ router.get('/', readLimiter, optionalAuth, async (req, res) => {
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 30));
-    const sortSpec = sort === 'relevance'
-      ? { relevance: -1, published: -1 }
-      : sort === 'discussed'
-        ? { commentCount: -1, published: -1 }
-        : { published: -1, createdAt: -1 };
+    const sortSpec = sort === 'discussed'
+      ? { commentCount: -1, published: -1 }
+      : { published: -1, createdAt: -1 };
 
     const [items, total] = await Promise.all([
       NewsItem.find(filter).sort(sortSpec).skip((pageNum - 1) * pageSize).limit(pageSize).lean(),
@@ -97,17 +94,16 @@ router.get('/front-page', readLimiter, optionalAuth, async (req, res) => {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const [breaking, featured, latest, discussed, topRelevance] = await Promise.all([
+    const [breaking, featured, latest, discussed] = await Promise.all([
       NewsItem.find({ ...visible, urgent: true, published: { $gte: dayAgo } }).sort({ published: -1 }).limit(3).lean(),
       NewsItem.find({ ...visible, featured: true }).sort({ published: -1 }).limit(4).lean(),
       NewsItem.find(visible).sort({ published: -1, createdAt: -1 }).limit(24).lean(),
       NewsItem.find({ ...visible, commentCount: { $gt: 0 }, published: { $gte: weekAgo } }).sort({ commentCount: -1 }).limit(5).lean(),
-      NewsItem.find({ ...visible, published: { $gte: dayAgo } }).sort({ relevance: -1 }).limit(1).lean(),
     ]);
 
-    // Lead: newest featured story, else the most relevant story of the day,
-    // else simply the latest.
-    const lead = featured[0] || topRelevance[0] || latest[0] || null;
+    // Lead: newest editors' pick, else the newest breaking story, else the
+    // latest story.
+    const lead = featured[0] || breaking[0] || latest[0] || null;
     const leadId = lead && String(lead._id);
     const s = (arr) => arr.filter((i) => String(i._id) !== leadId).map((i) => serialize(i, caps));
 

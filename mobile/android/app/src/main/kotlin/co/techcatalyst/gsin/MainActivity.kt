@@ -1,4 +1,4 @@
-package co.techcatalyst.singularitywire
+package co.techcatalyst.gsin
 
 import io.flutter.embedding.android.FlutterActivity
 

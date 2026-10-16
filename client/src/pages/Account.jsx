@@ -21,7 +21,7 @@ export default function Account() {
   const [msg, setMsg] = useState(params.get('checkout') === 'success' ? 'Payment received. Turning on Premium…' : '');
   const [topics, setTopics] = useState(user?.followedCategories || []);
   const [savedTopics, setSavedTopics] = useState('');
-  useDocumentTitle(`Account — ${BRAND.name}`);
+  useDocumentTitle(`Account — ${BRAND.short}`);
 
   useEffect(() => {
     if (params.get('checkout') === 'success') {

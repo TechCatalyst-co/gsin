@@ -1,7 +1,7 @@
 {
-  "name": "singularity-wire-server",
+  "name": "gsin-server",
   "version": "0.1.0",
-  "description": "API for Singularity Wire \u2014 an AI & superintelligence news outlet fed by n8n",
+  "description": "API for Global Super Intelligence News \u2014 an AI & superintelligence news outlet fed by n8n",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

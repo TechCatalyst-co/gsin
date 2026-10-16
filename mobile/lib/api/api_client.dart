@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import '../config.dart';
 import 'api_exception.dart';
 
-/// Thin JSON wrapper around the Singularity Wire API. Auth is carried by an
+/// Thin JSON wrapper around the Global Super Intelligence News API. Auth is carried by an
 /// Authorization: Bearer header (unlike the web client, which uses the
 /// HttpOnly cookie).
 class ApiClient {

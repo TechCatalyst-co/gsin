@@ -19,16 +19,16 @@ import 'screens/topics_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/common.dart';
 
-class SingularityWireApp extends StatefulWidget {
-  const SingularityWireApp({super.key, required this.auth});
+class GsinApp extends StatefulWidget {
+  const GsinApp({super.key, required this.auth});
 
   final AuthState auth;
 
   @override
-  State<SingularityWireApp> createState() => _SingularityWireAppState();
+  State<GsinApp> createState() => _GsinAppState();
 }
 
-class _SingularityWireAppState extends State<SingularityWireApp> with WidgetsBindingObserver {
+class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();

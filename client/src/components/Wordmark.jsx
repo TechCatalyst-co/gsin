@@ -11,11 +11,19 @@ export function CurveGlyph({ size = 28 }) {
   );
 }
 
-export default function Wordmark() {
+// "GSIN" set heavy, with the full name beside it as a two-line lockup.
+export default function Wordmark({ full = true }) {
   return (
     <span className="wordmark">
       <CurveGlyph />
-      <span className="wordmark-text">{BRAND.name}</span>
+      <span className="wordmark-short">{BRAND.short}</span>
+      {full && (
+        <span className="wordmark-full">
+          {/* Two balanced lines: "Global Super" / "Intelligence News" */}
+          <span>{BRAND.name.split(' ').slice(0, 2).join(' ')}</span>
+          <span>{BRAND.name.split(' ').slice(2).join(' ')}</span>
+        </span>
+      )}
     </span>
   );
 }

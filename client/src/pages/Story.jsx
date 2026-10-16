@@ -4,7 +4,6 @@ import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND } from '../brand';
 import CategoryTag from '../components/CategoryTag';
-import SignalMeter from '../components/SignalMeter';
 import ShareButton from '../components/ShareButton';
 import BookmarkButton from '../components/BookmarkButton';
 import CommentsPanel from '../components/Comments';
@@ -18,7 +17,7 @@ export default function Story() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  useDocumentTitle(data?.item ? `${data.item.title} — ${BRAND.name}` : BRAND.name);
+  useDocumentTitle(data?.item ? `${data.item.title} — ${BRAND.short}` : BRAND.name);
 
   useEffect(() => {
     setData(null);
@@ -38,7 +37,6 @@ export default function Story() {
         <header className="story-head">
           <div className="story-kicker">
             <CategoryTag name={item.category} />
-            <SignalMeter value={item.relevance} size="lg" />
             {item.urgent && <span className="flag-breaking">Breaking</span>}
           </div>
           <h1 className="story-title">{item.title}</h1>

@@ -175,7 +175,6 @@ class _BriefRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Wrap(spacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                    SignalMeter(value: item.relevance),
                     CategoryLabel(name: item.category, tappable: false),
                     if (item.urgent) const BreakingFlag(),
                   ]),

@@ -1,4 +1,4 @@
-# Web build for Singularity Wire (repo root).
+# Web build for Global Super Intelligence News (repo root).
 [build]
 base = "client"
 command = "npm run build"

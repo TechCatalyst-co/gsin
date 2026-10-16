@@ -95,7 +95,7 @@ router.get('/news', async (req, res) => {
     const pageSize = 30;
     const [items, total] = await Promise.all([
       NewsItem.find(filter).sort({ published: -1 }).skip((pageNum - 1) * pageSize).limit(pageSize)
-        .select('title slug url source category published relevance urgent featured hidden commentCount').lean(),
+        .select('title slug url source category published urgent featured hidden commentCount').lean(),
       NewsItem.countDocuments(filter),
     ]);
     res.json({ items, pagination: { page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) } });

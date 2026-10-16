@@ -148,7 +148,6 @@ class _StoryBody extends StatelessWidget {
         children: [
           Wrap(spacing: 12, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
             CategoryLabel(name: item.category),
-            SignalMeter(value: item.relevance, large: true),
             if (item.urgent) const BreakingFlag(),
           ]),
           const SizedBox(height: 12),

@@ -20,7 +20,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
-  useDocumentTitle(`${BRAND.name} — AI and superintelligence news`);
+  useDocumentTitle(`${BRAND.short} — ${BRAND.name}`);
 
   useEffect(() => {
     api('/news/front-page').then(setData).catch((e) => setError(e.message));

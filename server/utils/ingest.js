@@ -17,14 +17,12 @@ function normalizeItem(raw = {}) {
     : typeof raw.tags === 'string'
       ? raw.tags.split(',')
       : [];
-  const relevance = Number(raw.relevance);
   return {
     title: str(raw.title, 500),
     url,
     source: str(raw.source, 120) || 'RSS',
     author: str(raw.author || raw.creator, 200),
     published: published && !Number.isNaN(published.getTime()) ? published : undefined,
-    relevance: Number.isFinite(relevance) ? Math.max(0, Math.min(100, relevance)) : undefined,
     category: str(raw.category, 80),
     tags: tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 12),
     imageUrl: image && isSafeUrl(image) ? image : undefined,
