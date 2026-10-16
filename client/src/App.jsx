@@ -9,7 +9,6 @@ import Topic, { Search } from './pages/Topic';
 import Story from './pages/Story';
 import DailyBrief from './pages/DailyBrief';
 import Saved from './pages/Saved';
-import Premium from './pages/Premium';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Account from './pages/Account';
@@ -36,7 +35,6 @@ export default function App() {
             <Route path="/story/:slug" element={<Story />} />
             <Route path="/search" element={<Search />} />
             <Route path="/brief" element={<DailyBrief />} />
-            <Route path="/premium" element={<Premium />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terms" element={<Terms />} />
@@ -53,7 +51,8 @@ export default function App() {
             </Route>
             {/* Old Helio paths */}
             <Route path="/daily-brief" element={<Navigate to="/brief" replace />} />
-            <Route path="/pricing" element={<Navigate to="/premium" replace />} />
+            <Route path="/pricing" element={<Navigate to="/" replace />} />
+            <Route path="/premium" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

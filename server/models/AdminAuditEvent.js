@@ -6,7 +6,7 @@ const adminAuditEventSchema = new mongoose.Schema(
     target: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
     action: {
       type: String,
-      enum: ['user.created', 'password.reset', 'subscription.changed', 'story.curated'],
+      enum: ['user.created', 'password.reset', 'story.curated'],
       required: true,
       index: true,
     },

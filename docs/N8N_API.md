@@ -47,7 +47,7 @@ Body: one object or an array.
 | `headline` | string | no | One-line dek under the title. |
 | `summary` | string | no | 2–4 sentence free summary. Aliases: `description`, `contentSnippet`. |
 | `impact` | string | no | "Why it matters" (free). Alias: `why_it_matters`. |
-| `analysis` | string | no | Longer **Premium** analysis. Paragraphs separated by blank lines. |
+| `analysis` | string | no | Longer analysis for major stories. Paragraphs separated by blank lines. |
 | `imageUrl` | string | no | `http(s)` image. Aliases: `image`, `thumbnail`. |
 
 **Desks** (what the clients color and list in navigation):
@@ -94,20 +94,19 @@ Upserted by calendar day; re-sending a day replaces it. Every item is also upser
 
 `200 { "ok": true, "briefingDate": "...", "itemCount": n }`. See `samples/daily-brief-sample.json`.
 
-The brief is readable by Premium members and staff on web and mobile.
+The brief is free for everyone on web and mobile, no account needed.
 
 ---
 
-## 3. `GET /api/subscribers` — who to email
+## 3. `GET /api/subscribers` — who to email the Daily Brief
 
-| Query | Returns |
-| --- | --- |
-| *(none)* or `?audience=premium` | Premium members plus staff — recipients for the Daily Brief email. |
-| `?audience=all` | Every non-banned account — for a free weekly digest. |
+Every non-banned account that has the brief email turned on (it's on by default; readers switch it off in Account).
 
 ```json
-{ "audience": "premium", "count": 2, "subscribers": [{ "name": "Ada", "email": "ada@example.com" }] }
+{ "count": 2, "subscribers": [{ "name": "Ada", "email": "ada@example.com" }] }
 ```
+
+Include an unsubscribe link in the email that points at `{WEB}/account`.
 
 ---
 

@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // Like requireAuth, but never rejects: public routes use it to personalize
-// (premium fields, isMine flags) when a valid session is present.
+// (isMine, bookmarked, canPost) when a valid session is present.
 module.exports = async function optionalAuth(req, _res, next) {
   try {
     const header = req.headers.authorization || '';

@@ -11,12 +11,9 @@ const router = express.Router();
 
 const escapeRx = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// The public wire shape. The Premium `analysis` body is only included for
-// readers entitled to it; everyone else gets `hasAnalysis` as a teaser flag.
+// The public wire shape. `hidden` is only exposed to staff.
 function serialize(item, caps) {
-  const { analysis, ...rest } = item;
-  const out = { ...rest, hasAnalysis: !!analysis };
-  if (caps.readAnalysis && analysis) out.analysis = analysis;
+  const out = { ...item, hasAnalysis: !!item.analysis };
   if (!caps.curate) delete out.hidden;
   return out;
 }

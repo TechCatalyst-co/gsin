@@ -44,6 +44,19 @@ router.post('/bookmarks', async (req, res) => {
   }
 });
 
+// PUT /api/me/preferences — { briefEmails: boolean }
+router.put('/preferences', async (req, res) => {
+  try {
+    const { briefEmails } = req.body || {};
+    if (typeof briefEmails !== 'boolean') return res.status(400).json({ error: 'briefEmails must be true or false' });
+    await User.updateOne({ _id: req.user._id }, { $set: { briefEmails } });
+    res.json({ ok: true, briefEmails });
+  } catch (err) {
+    console.error('preferences update error:', err);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
+});
+
 // PUT /api/me/categories — { categories: string[] }
 router.put('/categories', async (req, res) => {
   try {

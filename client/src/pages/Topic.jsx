@@ -47,7 +47,7 @@ export function FeedPage({ title, intro, query }) {
       {error && <div className="alert">{error}</div>}
       {!data ? <div className="center muted">Loading…</div> : (
         <>
-          <StoryList items={data.items} empty="No stories match yet. Try a broader search." />
+          <StoryList items={data.items} empty="No stories match yet. Try a broader search." adEvery={8} />
           {data.pagination.totalPages > 1 && (
             <nav className="pager" aria-label="Pages">
               <button className="btn ghost sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))}>Newer</button>

@@ -12,17 +12,6 @@ app.set('trust proxy', 1);
 
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 
-// IMPORTANT: the Stripe webhook must receive the RAW body for signature
-// verification, so it is mounted BEFORE express.json() with express.raw().
-// Aliased under /api/v1 too, so the versioned path stays symmetric (Stripe
-// still only calls whichever URL is set in its dashboard).
-app.use(
-  ['/api/billing/webhook', '/api/v1/billing/webhook'],
-  express.raw({ type: 'application/json' }),
-  require('./routes/webhook')
-);
-
-// All other routes use JSON parsing.
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 

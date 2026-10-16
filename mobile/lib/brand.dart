@@ -7,7 +7,6 @@ abstract class Brand {
   static const short = 'GSIN';
   static const tagline =
       'News on artificial intelligence and the road to superintelligence, from around the world.';
-  static const premiumPrice = r'$8';
 }
 
 class Category {

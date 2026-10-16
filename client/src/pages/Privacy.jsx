@@ -15,12 +15,8 @@ export default function Privacy() {
       <h2>1. Information we collect</h2>
       <ul>
         <li><strong>Account data</strong> — your name and email address.</li>
-        <li><strong>Subscription data</strong> — your plan, status, and billing history.</li>
         <li><strong>Content you submit</strong> — comments and other content you post.</li>
-        <li>
-          <strong>Payment data</strong> — handled by our payment processor, Stripe. We do not
-          store your full card details.
-        </li>
+        <li><strong>Preferences</strong> — topics you follow, saved stories, and whether you want the brief email.</li>
         <li>
           <strong>Usage and technical data</strong> — basic logs needed to operate and secure
           the Service.
@@ -29,22 +25,30 @@ export default function Privacy() {
 
       <h2>2. How we use your information</h2>
       <p>
-        We use your information to provide and maintain the Service, process subscriptions,
-        deliver the daily briefing and alerts, respond to support requests, secure the Service,
+        We use your information to provide and maintain the Service,
+        deliver the Daily Brief email you opt into, respond to support requests, secure the Service,
         and comply with legal obligations.
       </p>
 
       <h2>3. How we share information</h2>
       <p>
         We do not sell your personal information. We share it only with service providers who
-        help us operate the Service — such as Stripe for payments and our email delivery
-        provider — and when required by law or to protect our rights.
+        help us operate the Service — such as our hosting and email delivery providers — and,
+        if advertising is enabled, our advertising partners as described below, and when
+        required by law or to protect our rights.
       </p>
 
-      <h2>4. Cookies and authentication</h2>
+      <h2>4. Cookies, authentication, and advertising</h2>
       <p>
         We use a secure, HttpOnly authentication cookie to keep you signed in. We do not use it
         to track you across other websites.
+      </p>
+      <p>
+        {BRAND.name} is free and is supported by advertising. When ads are shown, advertising
+        partners (for example Google AdSense on the web and Google AdMob in the app) may use
+        cookies or device identifiers to serve and measure ads, and, where you consent, to
+        personalize them. Where required by law we ask for your consent first, and you can
+        change your choice at any time.
       </p>
 
       <h2>5. Data retention</h2>

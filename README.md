@@ -1,21 +1,23 @@
 <h1>Global Super Intelligence News (GSIN)</h1>
 
-A news outlet for artificial intelligence and the road to superintelligence. An **n8n** workflow gathers and summarizes stories; this platform publishes them on the **web** and in an **iOS/Android app**, with a free reading experience and an optional **Premium** membership.
+A news outlet for artificial intelligence and the road to superintelligence. An **n8n** workflow gathers and summarizes stories; this platform publishes them on the **web** and in an **iOS/Android app**, completely free, with ad slots built in for future revenue.
 
-Forked from the Helio Intelligence Platform: the Express/MongoDB API, auth, Stripe billing, n8n ingest, daily brief, comments, moderation, and admin tooling were kept and reshaped; the expert-review roles, journals, and referral program were removed.
+Forked from the Helio Intelligence Platform: the Express/MongoDB API, auth, n8n ingest, daily brief, comments, moderation, and admin tooling were kept and reshaped; billing, the expert-review roles, journals, and the referral program were removed.
 
 ## What readers get
 
-| | Free (no account) | Free account | Premium |
-| --- | --- | --- | --- |
-| Every story, topic pages, search, RSS | ✓ | ✓ | ✓ |
-| Read discussions | ✓ | ✓ | ✓ |
-| Save stories, follow topics ("For you") | | ✓ | ✓ |
-| Daily Brief (web, app, email via n8n) | | | ✓ |
-| Extended analysis on stories | | | ✓ |
-| Post and reply in discussions | | | ✓ |
+| | No account | Free account |
+| --- | --- | --- |
+| Every story, analysis, topic pages, search, RSS | ✓ | ✓ |
+| The Daily Brief | ✓ | ✓ |
+| Read discussions | ✓ | ✓ |
+| Post and reply in discussions | | ✓ |
+| Save stories, follow topics ("For you") | | ✓ |
+| Daily Brief by email (on by default, can be turned off) | | ✓ |
 
-Set `COMMENTS_FREE=true` on the API to let free accounts post too. Staff roles: **editor** (curate the feed, moderate) and **admin** (also members and entitlements).
+Revenue: ad slots are built into the web and app layouts and are switched off until you configure them. See [docs/ADS.md](docs/ADS.md).
+
+Staff roles: **editor** (curate the feed, moderate) and **admin** (also members).
 
 ## Architecture
 
@@ -24,7 +26,6 @@ flowchart LR
     Sources["RSS, arXiv, lab blogs"] --> N8N["n8n: fetch, dedupe, LLM summarize"]
     N8N -->|"POST /api/news, /api/daily-brief"| API["Express API (server/)"]
     API --> Mongo[(MongoDB)]
-    API <--> Stripe["Stripe (Premium)"]
     Web["React web (client/)"] <--> API
     App["Flutter app (mobile/)"] <--> API
     API -->|"GET /api/subscribers"| N8N
@@ -82,18 +83,18 @@ API (`server/.env`):
 | `MONGODB_URI` | Must include a database name, e.g. `…/gsin` |
 | `JWT_SECRET`, `JWT_EXPIRES_IN` | Sessions |
 | `API_KEY` | Shared secret for n8n |
-| `CLIENT_URL` | Web origin: CORS, Stripe return URLs, RSS/sitemap links |
-| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_PREMIUM`, `STRIPE_WEBHOOK_SECRET` | Premium billing |
-| `COMMENTS_FREE` | `true` lets free accounts post |
+| `CLIENT_URL` | Web origin: CORS, RSS/sitemap links |
 | `BRAND_NAME`, `BRAND_TAGLINE` | Used in RSS |
 
-Web: rename or re-color in `client/src/brand.js`; set `API_PROXY_TARGET` on Netlify. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL`, `SHOW_UPGRADE_LINKS` via `--dart-define`).
+Web: rename or re-color in `client/src/brand.js`; set `API_PROXY_TARGET` on Netlify. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
+
+Ads: `VITE_ADS_PROVIDER` and slot IDs on the web, `ADS_PROVIDER` in the app. See [docs/ADS.md](docs/ADS.md).
 
 ## Deploy
 
-- **API:** Render blueprint in `render.yaml` (or any Node host). Create a Stripe webhook to `/api/billing/webhook` for `checkout.session.completed` and `customer.subscription.*`.
+- **API:** Render blueprint in `render.yaml` (or any Node host).
 - **Web:** Netlify (`netlify.toml`); `/api/*`, `/rss.xml`, and `/sitemap.xml` are proxied to the API.
-- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN". Premium is purchased on the web (App Store 3.1.1); build with `--dart-define=SHOW_UPGRADE_LINKS=false` if review requires removing the link-out.
+- **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN".
 
 ## Tests
 

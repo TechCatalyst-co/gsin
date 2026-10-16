@@ -15,7 +15,7 @@ const String apiBaseUrl = String.fromEnvironment(
   defaultValue: _defaultApiBaseUrl,
 );
 
-/// Public web origin, used for share links and the Premium link-out.
+/// Public web origin, used for share links and legal pages.
 const String webBaseUrl = String.fromEnvironment(
   'WEB_BASE_URL',
   defaultValue: kReleaseMode
@@ -26,10 +26,3 @@ const String webBaseUrl = String.fromEnvironment(
 /// Versioned API path prefix appended after [apiBaseUrl].
 const String apiPathPrefix = '/api/v1';
 
-/// App Store 3.1.1 kill-switch for the "Get Premium on the web" link-out.
-/// Build with --dart-define=SHOW_UPGRADE_LINKS=false if App Review objects;
-/// Premium screens then explain the benefit without linking out.
-const bool showUpgradeLinks = bool.fromEnvironment(
-  'SHOW_UPGRADE_LINKS',
-  defaultValue: true,
-);

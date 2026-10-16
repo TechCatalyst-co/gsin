@@ -19,7 +19,6 @@ export default function Footer() {
           <h2 className="footer-head">More</h2>
           <ul>
             <li><Link to="/brief">Daily Brief</Link></li>
-            <li><Link to="/premium">Premium</Link></li>
             <li><a href="/api/v1/public/rss">RSS feed</a></li>
             <li><Link to="/privacy">Privacy</Link></li>
             <li><Link to="/terms">Terms</Link></li>

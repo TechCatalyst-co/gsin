@@ -23,7 +23,6 @@ function adminUser(user) {
     ...user.toPublic(),
     banned: user.banned,
     createdAt: user.createdAt,
-    hasStripeCustomer: !!user.stripeCustomerId,
   };
 }
 
@@ -40,13 +39,13 @@ router.get('/metrics', async (_req, res) => {
   try {
     const days = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
     const [
-      totalMembers, premiumMembers, newMembers30d,
+      totalMembers, briefSubscribers, newMembers30d,
       totalStories, stories24h, stories7d, breaking24h,
       totalComments, comments7d, openReports,
       briefs, latestBrief, topStories, byCategory,
     ] = await Promise.all([
       User.countDocuments(),
-      User.countDocuments(User.activeAccessFilter()),
+      User.countDocuments({ banned: { $ne: true }, briefEmails: { $ne: false } }),
       User.countDocuments({ createdAt: { $gte: days(30) } }),
       NewsItem.countDocuments(),
       NewsItem.countDocuments({ createdAt: { $gte: days(1) } }),
@@ -68,7 +67,7 @@ router.get('/metrics', async (_req, res) => {
     // Last ingest time doubles as an n8n pipeline health check.
     const lastIngest = await NewsItem.findOne().sort({ updatedAt: -1 }).select('updatedAt').lean();
     res.json({
-      totalMembers, premiumMembers, newMembers30d,
+      totalMembers, briefSubscribers, newMembers30d,
       totalStories, stories24h, stories7d, breaking24h,
       totalComments, comments7d, openReports,
       briefs, latestBrief, topStories, byCategory,
@@ -194,7 +193,7 @@ router.get('/users', requireAdmin, async (req, res) => {
 
 router.post('/users', requireAdmin, adminSensitiveLimiter, async (req, res) => {
   try {
-    const { name, email, role = 'member', premium = false } = req.body || {};
+    const { name, email, role = 'member' } = req.body || {};
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     if (!EMAIL_RE.test(normalizedEmail)) return res.status(400).json({ error: 'A valid email is required' });
     if (!ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
@@ -207,18 +206,12 @@ router.post('/users', requireAdmin, adminSensitiveLimiter, async (req, res) => {
       email: normalizedEmail,
       role,
       mustChangePassword: true,
-      ...(premium && {
-        subscriptionOverride: 'active',
-        subscriptionOverrideReason: 'Premium granted when account was created manually',
-        subscriptionOverrideAt: new Date(),
-        subscriptionOverrideBy: req.user._id,
-      }),
     });
     user.password = password;
     await user.save();
     await AdminAuditEvent.create({
       actor: req.user._id, target: user._id, action: 'user.created',
-      after: { email: user.email, role: user.role, subscriptionOverride: user.subscriptionOverride },
+      after: { email: user.email, role: user.role },
     });
     res.status(201).json({ user: adminUser(user), temporaryPassword: password });
   } catch (err) {
@@ -245,38 +238,6 @@ router.post('/users/:id/reset-password', requireAdmin, adminSensitiveLimiter, as
   } catch (err) {
     console.error('admin password reset error:', err);
     res.status(500).json({ error: 'Failed to reset password' });
-  }
-});
-
-// PATCH /api/admin/users/:id/subscription — { override: active|inactive|none, reason }
-router.patch('/users/:id/subscription', requireAdmin, adminSensitiveLimiter, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid user id' });
-    const { override, reason } = req.body || {};
-    if (!['active', 'inactive', 'none'].includes(override)) {
-      return res.status(400).json({ error: 'Override must be active, inactive, or none' });
-    }
-    const cleanReason = typeof reason === 'string' ? reason.trim().slice(0, 500) : '';
-    if (override === 'inactive' && !cleanReason) {
-      return res.status(400).json({ error: 'A reason is required to deactivate access' });
-    }
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    const before = { subscriptionOverride: user.subscriptionOverride || 'none' };
-    user.subscriptionOverride = override;
-    user.subscriptionOverrideReason = override === 'none' ? undefined : cleanReason || 'Granted by administrator';
-    user.subscriptionOverrideAt = override === 'none' ? undefined : new Date();
-    user.subscriptionOverrideBy = override === 'none' ? undefined : req.user._id;
-    await user.save();
-    await AdminAuditEvent.create({
-      actor: req.user._id, target: user._id, action: 'subscription.changed',
-      reason: cleanReason || undefined, before, after: { subscriptionOverride: user.subscriptionOverride },
-    });
-    res.json({ user: adminUser(user) });
-  } catch (err) {
-    console.error('admin subscription update error:', err);
-    res.status(500).json({ error: 'Failed to update subscription access' });
   }
 });
 

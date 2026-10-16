@@ -18,14 +18,14 @@ class Capabilities {
   final bool curate;
   final bool manageMembers;
 
-  /// Signed-out readers.
-  static const anonymous = Capabilities();
+  /// Signed-out readers: everything except posting.
+  static const anonymous = Capabilities(accessDailyBrief: true, readAnalysis: true);
 
   factory Capabilities.fromJson(Map<String, dynamic> j) => Capabilities(
         readNews: (j['readNews'] as bool?) ?? true,
         viewThreads: (j['viewThreads'] as bool?) ?? true,
-        accessDailyBrief: (j['accessDailyBrief'] as bool?) ?? false,
-        readAnalysis: (j['readAnalysis'] as bool?) ?? false,
+        accessDailyBrief: (j['accessDailyBrief'] as bool?) ?? true,
+        readAnalysis: (j['readAnalysis'] as bool?) ?? true,
         participateInThreads: (j['participateInThreads'] as bool?) ?? false,
         curate: (j['curate'] as bool?) ?? false,
         manageMembers: (j['manageMembers'] as bool?) ?? false,
@@ -39,13 +39,9 @@ class User {
     this.name,
     required this.email,
     required this.role,
-    required this.subscriptionStatus,
-    this.currentPeriodEnd,
-    required this.hasAccess,
-    required this.isPremium,
     required this.followedCategories,
+    this.briefEmails = true,
     required this.capabilities,
-    this.upgradeUrl,
     this.mustChangePassword = false,
   });
 
@@ -53,29 +49,21 @@ class User {
   final String? name;
   final String email;
   final String role;
-  final String subscriptionStatus;
-  final DateTime? currentPeriodEnd;
-  final bool hasAccess;
-  final bool isPremium;
   final List<String> followedCategories;
+  final bool briefEmails;
   final Capabilities capabilities;
-  final String? upgradeUrl;
   final bool mustChangePassword;
 
   bool get isStaff => role == 'editor' || role == 'admin';
 
-  User copyWith({List<String>? followedCategories}) => User(
+  User copyWith({List<String>? followedCategories, bool? briefEmails}) => User(
         id: id,
         name: name,
         email: email,
         role: role,
-        subscriptionStatus: subscriptionStatus,
-        currentPeriodEnd: currentPeriodEnd,
-        hasAccess: hasAccess,
-        isPremium: isPremium,
         followedCategories: followedCategories ?? this.followedCategories,
+        briefEmails: briefEmails ?? this.briefEmails,
         capabilities: capabilities,
-        upgradeUrl: upgradeUrl,
         mustChangePassword: mustChangePassword,
       );
 
@@ -84,19 +72,13 @@ class User {
         name: j['name'] as String?,
         email: j['email'] as String,
         role: (j['role'] as String?) ?? 'member',
-        subscriptionStatus: (j['subscriptionStatus'] as String?) ?? 'inactive',
-        currentPeriodEnd: j['currentPeriodEnd'] != null
-            ? DateTime.tryParse(j['currentPeriodEnd'] as String)
-            : null,
-        hasAccess: (j['hasAccess'] as bool?) ?? false,
-        isPremium: (j['isPremium'] as bool?) ?? false,
         followedCategories: ((j['followedCategories'] as List?) ?? const [])
             .whereType<String>()
             .toList(),
+        briefEmails: (j['briefEmails'] as bool?) ?? true,
         capabilities: j['capabilities'] is Map<String, dynamic>
             ? Capabilities.fromJson(j['capabilities'] as Map<String, dynamic>)
             : Capabilities.anonymous,
-        upgradeUrl: j['upgradeUrl'] as String?,
         mustChangePassword: (j['mustChangePassword'] as bool?) ?? false,
       );
 }

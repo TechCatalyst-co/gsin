@@ -19,7 +19,7 @@ class Comment {
   final String? authorId;
   final String? authorName;
 
-  /// 'staff' | 'premium' | 'member', snapshotted at write time.
+  /// 'staff' | 'member', snapshotted at write time.
   final String? authorBadge;
   final String? body;
   final String status;

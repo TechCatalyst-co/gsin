@@ -7,6 +7,7 @@ import CategoryTag from '../components/CategoryTag';
 import ShareButton from '../components/ShareButton';
 import BookmarkButton from '../components/BookmarkButton';
 import CommentsPanel from '../components/Comments';
+import AdSlot from '../components/AdSlot';
 import { StoryRow } from '../components/Story';
 import { longDate, storyPath } from '../format';
 import { isSafeHttpUrl } from '../url';
@@ -62,20 +63,12 @@ export default function Story() {
               <p>{item.impact}</p>
             </section>
           )}
-          {item.hasAnalysis && (
-            item.analysis ? (
-              <section className="analysis">
-                <h2>Analysis</h2>
-                {item.analysis.split(/\n{2,}/).map((p, i) => <p key={i}>{p}</p>)}
-              </section>
-            ) : (
-              <section className="analysis analysis--locked">
-                <h2>Analysis</h2>
-                <p>Our extended analysis of this story — context, what to watch, and second-order effects — is part of Premium.</p>
-                <Link to="/premium" className="btn primary sm">Unlock with Premium</Link>
-                {!user && <p className="muted small">Already a member? <Link to="/login" state={{ from: storyPath(item) }}>Sign in</Link></p>}
-              </section>
-            )
+          {item.analysis && <AdSlot placement="story-inline" />}
+          {item.analysis && (
+            <section className="analysis">
+              <h2>Analysis</h2>
+              {item.analysis.split(/\n{2,}/).map((p, i) => <p key={i}>{p}</p>)}
+            </section>
           )}
           {item.tags?.length > 0 && (
             <div className="tags">
@@ -83,6 +76,8 @@ export default function Story() {
             </div>
           )}
         </div>
+
+        <AdSlot placement="story-end" />
 
         <section className="discussion" aria-labelledby="disc">
           <h2 id="disc" className="section-h">Discussion</h2>

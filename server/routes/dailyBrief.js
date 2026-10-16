@@ -2,9 +2,7 @@ const express = require('express');
 const DailyBrief = require('../models/DailyBrief');
 const NewsItem = require('../models/NewsItem');
 const apiKey = require('../middleware/apiKey');
-const { machineLimiter } = require('../middleware/rateLimit');
-const requireAuth = require('../middleware/auth');
-const { requireCapability } = require('../utils/capabilities');
+const { machineLimiter, readLimiter } = require('../middleware/rateLimit');
 const { normalizeItem, upsertNewsItems } = require('../utils/ingest');
 const { isSafeUrl } = require('../utils/slug');
 
@@ -131,7 +129,7 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
 
 // GET /api/daily-brief/latest — the newest brief. Default view of the page.
 // (Declared before /:date so "latest" isn't captured as a date.)
-router.get('/latest', requireAuth, requireCapability('accessDailyBrief'), async (_req, res) => {
+router.get('/latest', readLimiter, async (_req, res) => {
   try {
     const brief = await DailyBrief.findOne().sort({ briefingDate: -1 }).lean();
     res.json({ brief: brief ? await withDiscussion(brief) : null });
@@ -143,7 +141,7 @@ router.get('/latest', requireAuth, requireCapability('accessDailyBrief'), async 
 
 // GET /api/daily-brief/dates — the days that have a brief (newest first), so
 // the archive calendar can enable only those days. (Declared before /:date.)
-router.get('/dates', requireAuth, requireCapability('accessDailyBrief'), async (_req, res) => {
+router.get('/dates', readLimiter, async (_req, res) => {
   try {
     const rows = await DailyBrief.find().sort({ briefingDate: -1 }).select('briefingDate').lean();
     res.json({ dates: rows.map((r) => r.briefingDate.toISOString().slice(0, 10)) });
@@ -154,7 +152,7 @@ router.get('/dates', requireAuth, requireCapability('accessDailyBrief'), async (
 });
 
 // GET /api/daily-brief/:date — the brief for a specific day (YYYY-MM-DD).
-router.get('/:date', requireAuth, requireCapability('accessDailyBrief'), async (req, res) => {
+router.get('/:date', readLimiter, async (req, res) => {
   try {
     const range = utcDayRange(req.params.date);
     if (!range) return res.status(400).json({ error: 'Invalid date (expected YYYY-MM-DD)' });

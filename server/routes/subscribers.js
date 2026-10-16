@@ -5,19 +5,14 @@ const { machineLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
-// GET /api/subscribers  — key-protected. n8n calls this to get the list of
-// eligible paying members to email the briefing to. Returns minimal fields only.
-router.get('/', machineLimiter, apiKey, async (req, res) => {
+// GET /api/subscribers — key-protected. n8n calls this for the Daily Brief
+// email: every non-banned account that has brief emails turned on.
+router.get('/', machineLimiter, apiKey, async (_req, res) => {
   try {
-    // ?audience=premium (default) → Daily Brief newsletter recipients.
-    // ?audience=all → every non-banned account (e.g. a free weekly digest).
-    const audience = req.query.audience === 'all' ? 'all' : 'premium';
-    const filter = audience === 'all'
-      ? { banned: { $ne: true } }
-      : { $or: [User.activeAccessFilter(), { role: { $in: ['editor', 'admin'] } }] };
-    const users = await User.find(filter).select('name email').lean();
+    const users = await User.find({ banned: { $ne: true }, briefEmails: { $ne: false } })
+      .select('name email')
+      .lean();
     res.json({
-      audience,
       count: users.length,
       subscribers: users.map((u) => ({ name: u.name, email: u.email })),
     });

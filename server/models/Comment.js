@@ -7,8 +7,8 @@ const commentSchema = new mongoose.Schema(
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     // Snapshot at write time so threads never depend on the users collection.
     authorName: { type: String, required: true, trim: true },
-    // 'staff' | 'premium' | 'member' — snapshotted badge for the author row.
-    authorBadge: { type: String, enum: ['staff', 'premium', 'member'], default: 'member' },
+    // 'staff' | 'member' — snapshotted badge for the author row.
+    authorBadge: { type: String, enum: ['staff', 'member'], default: 'member' },
     body: { type: String, required: true, trim: true, maxlength: 2000 },
 
     // Soft delete keeps thread structure intact.

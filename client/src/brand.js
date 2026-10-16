@@ -3,7 +3,6 @@ export const BRAND = {
   name: 'Global Super Intelligence News',
   short: 'GSIN',
   tagline: 'News on artificial intelligence and the road to superintelligence, from around the world.',
-  premiumPrice: '$8',
   supportEmail: 'support@example.com',
 };
 

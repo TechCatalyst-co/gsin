@@ -8,15 +8,15 @@ const brief = require('../../samples/daily-brief-sample.json');
 
 const app = buildApp();
 const KEY = { 'x-api-key': process.env.API_KEY };
-let free;
-let premium;
+let reader;
+let other;
 let editor;
 
 test.before(async () => {
   await startDb();
   await NewsItem.init();
-  free = await makeUser({ name: 'Free Reader' });
-  premium = await makeUser({ name: 'Premium Reader', subscriptionStatus: 'active' });
+  reader = await makeUser({ name: 'Reader' });
+  other = await makeUser({ name: 'Other Reader', briefEmails: false });
   editor = await makeUser({ name: 'Editor', role: 'editor' });
 });
 test.after(stopDb);
@@ -73,18 +73,15 @@ test('partial re-ingest does not blank fields or reset curation', async () => {
   assert.equal(after.urgent, true);
 });
 
-test('feed is public; analysis is Premium-only', async () => {
+test('feed and analysis are public, no account needed', async () => {
   const anon = await request(app).get('/api/news?limit=50').expect(200);
   assert.ok(anon.body.items.length >= sample.length);
   const withAnalysis = anon.body.items.find((i) => i.url === sample[0].url);
   assert.equal(withAnalysis.hasAnalysis, true);
-  assert.equal(withAnalysis.analysis, undefined);
-
-  const prem = await request(app).get('/api/news?limit=50').set('Authorization', premium.auth).expect(200);
-  assert.ok(prem.body.items.find((i) => i.url === sample[0].url).analysis);
-
-  const freeRes = await request(app).get(`/api/news/${withAnalysis.slug}`).set('Authorization', free.auth).expect(200);
-  assert.equal(freeRes.body.item.analysis, undefined);
+  assert.ok(withAnalysis.analysis);
+  const story = await request(app).get(`/api/news/${withAnalysis.slug}`).expect(200);
+  assert.ok(story.body.item.analysis);
+  assert.equal(story.body.item.hidden, undefined);
 });
 
 test('feed filters by category, tag and search; latest sort is newest first', async () => {
@@ -116,7 +113,7 @@ test('front page, categories, tags, story-by-slug with related', async () => {
 
 test('editors curate: hidden stories disappear from public views', async () => {
   const target = await NewsItem.findOne({ url: sample[3].url }).lean();
-  await request(app).patch(`/api/admin/news/${target._id}`).set('Authorization', free.auth).send({ hidden: true }).expect(403);
+  await request(app).patch(`/api/admin/news/${target._id}`).set('Authorization', reader.auth).send({ hidden: true }).expect(403);
   await request(app).patch(`/api/admin/news/${target._id}`).set('Authorization', editor.auth).send({ hidden: true }).expect(200);
   const feed = await request(app).get('/api/news?limit=100').expect(200);
   assert.ok(!feed.body.items.some((i) => i._id === String(target._id)));
@@ -127,55 +124,51 @@ test('editors curate: hidden stories disappear from public views', async () => {
   await request(app).get('/api/admin/metrics').set('Authorization', editor.auth).expect(200);
 });
 
-test('comments: public read, Premium post, free blocked', async () => {
+test('comments: public read, any signed-in reader can post', async () => {
   const story = await NewsItem.findOne({ url: sample[2].url }).lean();
   await request(app).post('/api/comments').send({ newsItem: story._id, body: 'hi' }).expect(401);
-  const blocked = await request(app).post('/api/comments').set('Authorization', free.auth)
-    .send({ newsItem: story._id, body: 'hi' }).expect(403);
-  assert.equal(blocked.body.code, 'upgrade_required');
 
-  const posted = await request(app).post('/api/comments').set('Authorization', premium.auth)
+  const posted = await request(app).post('/api/comments').set('Authorization', other.auth)
     .send({ newsItem: story._id, body: 'Compute thresholds will age badly.' }).expect(201);
-  assert.equal(posted.body.comment.authorBadge, 'premium');
+  assert.equal(posted.body.comment.authorBadge, 'member');
   await request(app).post('/api/comments').set('Authorization', editor.auth)
     .send({ newsItem: story._id, body: 'Thanks for reading.', parent: posted.body.comment._id }).expect(201);
 
   const list = await request(app).get('/api/comments').query({ newsItem: String(story._id) }).expect(200);
   assert.equal(list.body.total, 2);
   assert.equal(list.body.canPost, false);
+  const mine = await request(app).get('/api/comments').query({ newsItem: String(story._id) }).set('Authorization', reader.auth).expect(200);
+  assert.equal(mine.body.canPost, true);
   assert.equal((await NewsItem.findById(story._id).lean()).commentCount, 2);
 
-  await request(app).post(`/api/comments/${posted.body.comment._id}/report`).set('Authorization', free.auth).send({ reason: 'test' }).expect(200);
+  await request(app).post(`/api/comments/${posted.body.comment._id}/report`).set('Authorization', reader.auth).send({ reason: 'test' }).expect(200);
   const reported = await request(app).get('/api/admin/comments/reported').set('Authorization', editor.auth).expect(200);
   assert.equal(reported.body.comments.length, 1);
   await request(app).delete(`/api/comments/${posted.body.comment._id}`).set('Authorization', editor.auth).expect(200);
   assert.equal((await NewsItem.findById(story._id).lean()).commentCount, 1);
 });
 
-test('daily brief: n8n ingest, Premium-only read, items link to stories', async () => {
+test('daily brief: n8n ingest, public read, items link to stories', async () => {
   await request(app).post('/api/daily-brief').set(KEY).send(brief).expect(200);
-  await request(app).get('/api/daily-brief/latest').expect(401);
-  const denied = await request(app).get('/api/daily-brief/latest').set('Authorization', free.auth).expect(403);
-  assert.equal(denied.body.code, 'upgrade_required');
-  const ok = await request(app).get('/api/daily-brief/latest').set('Authorization', premium.auth).expect(200);
+  const ok = await request(app).get('/api/daily-brief/latest').expect(200);
   assert.equal(ok.body.brief.items.length, brief.app_items.length);
   assert.ok(ok.body.brief.items.every((i) => i.newsItemId && i.slug));
-  const dates = await request(app).get('/api/daily-brief/dates').set('Authorization', premium.auth).expect(200);
+  const dates = await request(app).get('/api/daily-brief/dates').expect(200);
   assert.deepEqual(dates.body.dates, ['2026-10-15']);
 });
 
 test('reader: bookmarks and followed topics', async () => {
   const story = await NewsItem.findOne({ url: sample[5].url }).lean();
-  await request(app).post('/api/me/bookmarks').set('Authorization', free.auth).send({ newsItem: story._id }).expect(200);
-  const saved = await request(app).get('/api/me/bookmarks').set('Authorization', free.auth).expect(200);
+  await request(app).post('/api/me/bookmarks').set('Authorization', reader.auth).send({ newsItem: story._id }).expect(200);
+  const saved = await request(app).get('/api/me/bookmarks').set('Authorization', reader.auth).expect(200);
   assert.equal(saved.body.items[0]._id, String(story._id));
-  const detail = await request(app).get(`/api/news/${story.slug}`).set('Authorization', free.auth).expect(200);
+  const detail = await request(app).get(`/api/news/${story.slug}`).set('Authorization', reader.auth).expect(200);
   assert.equal(detail.body.item.bookmarked, true);
-  await request(app).post('/api/me/bookmarks').set('Authorization', free.auth).send({ newsItem: story._id, saved: false }).expect(200);
-  assert.equal((await request(app).get('/api/me/bookmarks').set('Authorization', free.auth)).body.items.length, 0);
+  await request(app).post('/api/me/bookmarks').set('Authorization', reader.auth).send({ newsItem: story._id, saved: false }).expect(200);
+  assert.equal((await request(app).get('/api/me/bookmarks').set('Authorization', reader.auth)).body.items.length, 0);
 
-  await request(app).put('/api/me/categories').set('Authorization', free.auth).send({ categories: ['Open Source', 'Robotics'] }).expect(200);
-  const feed = await request(app).get('/api/me/feed').set('Authorization', free.auth).expect(200);
+  await request(app).put('/api/me/categories').set('Authorization', reader.auth).send({ categories: ['Open Source', 'Robotics'] }).expect(200);
+  const feed = await request(app).get('/api/me/feed').set('Authorization', reader.auth).expect(200);
   assert.ok(feed.body.items.length >= 1);
   assert.ok(feed.body.items.every((i) => ['Open Source', 'Robotics'].includes(i.category)));
 });
@@ -184,10 +177,12 @@ test('auth/me exposes capabilities; register works', async () => {
   const reg = await request(app).post('/api/auth/register')
     .send({ name: 'New', email: `n-${Date.now()}@example.com`, password: 'password123', client: 'mobile' }).expect(201);
   assert.equal(reg.body.user.capabilities.readNews, true);
-  assert.equal(reg.body.user.capabilities.accessDailyBrief, false);
-  const me = await request(app).get('/api/auth/me').set('Authorization', premium.auth).expect(200);
-  assert.equal(me.body.user.isPremium, true);
-  assert.equal(me.body.user.capabilities.participateInThreads, true);
+  assert.equal(reg.body.user.capabilities.accessDailyBrief, true);
+  assert.equal(reg.body.user.capabilities.participateInThreads, true);
+  assert.equal(reg.body.user.briefEmails, true);
+  assert.equal(reg.body.user.isPremium, undefined);
+  const me = await request(app).get('/api/auth/me').set('Authorization', editor.auth).expect(200);
+  assert.equal(me.body.user.capabilities.curate, true);
 });
 
 test('public: RSS, sitemap, share preview; subscribers for n8n', async () => {
@@ -204,9 +199,11 @@ test('public: RSS, sitemap, share preview; subscribers for n8n', async () => {
 
   const subs = await request(app).get('/api/subscribers').set(KEY).expect(200);
   const emails = subs.body.subscribers.map((s) => s.email);
-  assert.ok(emails.includes(premium.user.email));
+  assert.ok(emails.includes(reader.user.email));
   assert.ok(emails.includes(editor.user.email));
-  assert.ok(!emails.includes(free.user.email));
-  const all = await request(app).get('/api/subscribers?audience=all').set(KEY).expect(200);
-  assert.ok(all.body.subscribers.some((s) => s.email === free.user.email));
+  assert.ok(!emails.includes(other.user.email), 'opted out of brief emails');
+
+  await request(app).put('/api/me/preferences').set('Authorization', reader.auth).send({ briefEmails: false }).expect(200);
+  const after = await request(app).get('/api/subscribers').set(KEY).expect(200);
+  assert.ok(!after.body.subscribers.some((s) => s.email === reader.user.email));
 });

@@ -24,7 +24,7 @@ export default function AdminOverview() {
         <Stat label="Stories in the last 24 hours" value={m.stories24h} />
         <Stat label="Stories this week" value={m.stories7d} />
         <Stat label="Breaking in 24 hours" value={m.breaking24h} />
-        <Stat label="Premium members" value={m.premiumMembers} />
+        <Stat label="Brief email subscribers" value={m.briefSubscribers} />
         <Stat label="All accounts" value={m.totalMembers} />
         <Stat label="New accounts, 30 days" value={m.newMembers30d} />
         <Stat label="Comments this week" value={m.comments7d} />

@@ -24,13 +24,7 @@ services:
         generateValue: true
       - key: BRAND_NAME
         value: Global Super Intelligence News
-      - key: CLIENT_URL          # the Netlify web origin (CORS, Stripe returns, RSS links)
+      - key: CLIENT_URL          # the Netlify web origin (CORS, RSS links)
         sync: false
       - key: MONGODB_URI         # must name a database, e.g. …/gsin
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID_PREMIUM
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
         sync: false

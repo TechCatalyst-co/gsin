@@ -17,17 +17,16 @@ export default function Terms() {
       <p>
         {BRAND.name} is a news service covering artificial intelligence and superintelligence.
         Stories are gathered from public sources, summarized by an automated pipeline, and curated
-        by editors. Reading is free; Premium membership adds the Daily Brief, extended analysis,
-        and posting in discussions. The Service is provided for informational purposes only.
+        by editors. The Service is free to use and is supported by advertising. A free account
+        lets you post in discussions, save stories, and receive the Daily Brief by email. The
+        Service is provided for informational purposes only.
       </p>
 
-      <h2>2. Subscriptions and payment</h2>
+      <h2>2. Advertising</h2>
       <p>
-        Premium is offered as a recurring monthly subscription.
-        Payments are processed by our third‑party payment provider, Stripe; we do not store
-        your full card details. Subscriptions renew automatically until cancelled. You may
-        cancel at any time, and cancellation takes effect at the end of the current billing
-        period. Except where required by law, fees already paid are non‑refundable.
+        The Service may display advertisements from third parties. We are not responsible for
+        the content of third‑party ads or the products and services they promote. Ads are
+        always labeled.
       </p>
 
       <h2>3. Accounts and eligibility</h2>
@@ -41,8 +40,8 @@ export default function Terms() {
       <p>
         You agree not to misuse the Service, including by attempting to access it without
         authorization, scraping or redistributing content beyond your permitted use,
-        interfering with its operation, or using it to violate any law. Subscription content
-        is licensed to you for your own internal use and may not be resold or republished.
+        interfering with its operation, or using it to violate any law. Content is licensed to
+        you for personal use and may not be resold or republished.
       </p>
 
       <h2>5. User content</h2>

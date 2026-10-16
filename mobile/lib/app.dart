@@ -41,8 +41,8 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Returning from the browser (web checkout) re-fetches /me so a just-bought
-  // Premium membership unlocks without a manual refresh.
+  // Returning to the app re-fetches /me so role or preference changes made
+  // on the web show up without a manual refresh.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && widget.auth.status == AuthStatus.authed) {

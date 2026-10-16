@@ -7,7 +7,6 @@ export default function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const wantsPremium = params.get('next') === 'premium';
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,7 +19,7 @@ export default function Register() {
     setBusy(true);
     try {
       await register(form.name, form.email, form.password);
-      nav(wantsPremium ? '/premium' : '/');
+      nav('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -32,7 +31,7 @@ export default function Register() {
     <div className="auth-wrap">
       <div className="auth-card">
         <h2>Create your free account</h2>
-        <p className="muted">Save stories, follow topics, and read every discussion.{wantsPremium ? ' You’ll subscribe to Premium next.' : ''}</p>
+        <p className="muted">Join discussions, save stories, follow topics, and get the Daily Brief by email. Free.</p>
         {error && <div className="alert">{error}</div>}
         <form onSubmit={submit}>
           <label>Name<input value={form.name} onChange={set('name')} placeholder="Jane Doe" /></label>

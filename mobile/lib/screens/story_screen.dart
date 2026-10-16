@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../auth/auth_state.dart';
-import '../config.dart';
+import '../config.dart' show webBaseUrl;
 import '../models/comment.dart';
 import '../models/news_item.dart';
 import '../state/comments_state.dart';
@@ -14,7 +15,7 @@ import '../theme/app_theme.dart';
 import '../widgets/comment_tile.dart';
 import '../widgets/common.dart';
 
-/// One story: summary, why it matters, Premium analysis, related, discussion.
+/// One story: summary, why it matters, analysis, related, discussion.
 class StoryScreen extends StatefulWidget {
   const StoryScreen({super.key, required this.ref, this.preview});
 
@@ -112,7 +113,8 @@ class _StoryScreenState extends State<StoryScreen> {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
-                    _StoryBody(item: item, signedIn: auth.isAuthed, upgradeUrl: auth.user?.upgradeUrl),
+                    _StoryBody(item: item),
+                    const AdSlot(AdPlacement.storyEnd),
                     const _Discussion(),
                     if (_related.isNotEmpty) ...[
                       const SectionLabel('Related'),
@@ -131,11 +133,9 @@ class _StoryScreenState extends State<StoryScreen> {
 }
 
 class _StoryBody extends StatelessWidget {
-  const _StoryBody({required this.item, required this.signedIn, this.upgradeUrl});
+  const _StoryBody({required this.item});
 
   final NewsItem item;
-  final bool signedIn;
-  final String? upgradeUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -186,27 +186,19 @@ class _StoryBody extends StatelessWidget {
               ]),
             ),
           ],
-          if (item.hasAnalysis) ...[
-            const SizedBox(height: 20),
-            if (item.analysis != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(12)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Analysis', style: display(size: 16, color: p.ink)),
-                  const SizedBox(height: 6),
-                  for (final para in item.analysis!.split(RegExp(r'\n{2,}')))
-                    Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(para, style: body)),
-                ]),
-              )
-            else
-              PremiumPitch(
-                title: 'Analysis',
-                body: 'Our extended analysis of this story — context, what to watch, and second-order effects — is part of Premium.',
-                upgradeUrl: upgradeUrl,
-                signedIn: signedIn,
-              ),
+          if (item.analysis != null && item.analysis!.isNotEmpty) ...[
+            const AdSlot(AdPlacement.storyInline, padded: false),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(12)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Analysis', style: display(size: 16, color: p.ink)),
+                const SizedBox(height: 6),
+                for (final para in item.analysis!.split(RegExp(r'\n{2,}')))
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(para, style: body)),
+              ]),
+            ),
           ],
           if (item.tags.isNotEmpty) ...[
             const SizedBox(height: 18),
@@ -292,14 +284,12 @@ class _Discussion extends StatelessWidget {
               child: Row(children: [
                 Expanded(
                   child: Text(
-                    auth.isAuthed ? 'Posting in discussions is part of Premium.' : 'Sign in to join the discussion. Posting is part of Premium.',
+                    auth.isAuthed ? 'Your account can’t post right now.' : 'Sign in or create a free account to join the discussion.',
                     style: TextStyle(color: p.ink, fontSize: 14.5),
                   ),
                 ),
                 if (!auth.isAuthed)
-                  TextButton(onPressed: () => context.push('/login'), child: const Text('Sign in'))
-                else if (showUpgradeLinks)
-                  TextButton(onPressed: () => openPremiumOnWeb(auth.user?.upgradeUrl), child: const Text('Premium')),
+                  TextButton(onPressed: () => context.push('/login'), child: const Text('Sign in')),
               ]),
             ),
           if (thread.isEmpty)

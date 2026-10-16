@@ -76,9 +76,16 @@ class AuthState extends ChangeNotifier {
         'password': password,
       });
 
-  /// Signed-in readers see Premium/staff capabilities; everyone else reads
-  /// as anonymous.
+  /// Signed-in readers can post, save and follow; everyone can read.
   bool get isAuthed => _status == AuthStatus.authed && _user != null;
+
+  /// Locally reflect a brief-email preference saved via PUT /me/preferences.
+  void setBriefEmails(bool value) {
+    final u = _user;
+    if (u == null) return;
+    _user = u.copyWith(briefEmails: value);
+    notifyListeners();
+  }
 
   /// Locally reflect a followed-topics change saved via PUT /me/categories.
   void setFollowedCategories(List<String> categories) {

@@ -1,39 +1,35 @@
 // The access policy, in one place. Both clients read the resolved object from
 // /auth/me so neither duplicates the rules.
 //
-//   anonymous / free account : read every story, read every discussion
-//   Premium (paid or comped) : + Daily Brief, deep analysis, posting
-//   editor / admin           : everything (staff)
+//   everyone (no account) : every story, analysis, the Daily Brief, discussions
+//   signed-in reader       : + post in discussions, save stories, follow topics
+//   editor / admin         : + curate the feed and moderate (admin: members too)
 //
-// Set COMMENTS_FREE=true to let free accounts post too.
-const FREE = {
+// Everything is free. Revenue comes from ads (see docs/ADS.md).
+const PUBLIC = {
   readNews: true,
   viewThreads: true,
-  accessDailyBrief: false,
-  readAnalysis: false,
+  accessDailyBrief: true,
+  readAnalysis: true,
   participateInThreads: false,
   curate: false,
   manageMembers: false,
 };
 
 function capabilitiesFor(user) {
-  if (!user) return { ...FREE };
-  const premium = user.isPremium();
-  const freeComments = process.env.COMMENTS_FREE === 'true';
+  if (!user) return { ...PUBLIC };
   return {
-    ...FREE,
-    accessDailyBrief: premium,
-    readAnalysis: premium,
-    participateInThreads: premium || freeComments,
+    ...PUBLIC,
+    participateInThreads: true,
     curate: user.isStaff(),
     manageMembers: user.role === 'admin',
   };
 }
 
-const UPGRADE_MESSAGES = {
-  accessDailyBrief: 'Upgrade to Premium to read the Daily Brief',
-  readAnalysis: 'Upgrade to Premium to read the full analysis',
-  participateInThreads: 'Upgrade to Premium to join the discussion',
+const MESSAGES = {
+  participateInThreads: 'Sign in to join the discussion',
+  curate: 'Staff access required',
+  manageMembers: 'Admin access required',
 };
 
 // Middleware factory. Runs after requireAuth.
@@ -41,10 +37,7 @@ function requireCapability(name) {
   return (req, res, next) => {
     req.capabilities = capabilitiesFor(req.user);
     if (!req.capabilities[name]) {
-      return res.status(403).json({
-        error: UPGRADE_MESSAGES[name] || 'You do not have access to this feature',
-        code: UPGRADE_MESSAGES[name] ? 'upgrade_required' : 'forbidden',
-      });
+      return res.status(403).json({ error: MESSAGES[name] || 'You do not have access to this feature', code: 'forbidden' });
     }
     next();
   };

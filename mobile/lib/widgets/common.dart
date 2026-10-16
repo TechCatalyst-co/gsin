@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../brand.dart';
-import '../config.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 
@@ -28,15 +27,6 @@ bool isSafeHttpUrl(String url) {
 Future<void> openExternal(String url) async {
   if (!isSafeHttpUrl(url)) return;
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-}
-
-/// Premium is purchased on the web (App Store 3.1.1); returns false when
-/// link-outs are disabled for this build.
-Future<bool> openPremiumOnWeb(String? upgradeUrl) async {
-  if (!showUpgradeLinks) return false;
-  final url = upgradeUrl ?? '$webBaseUrl/premium';
-  await openExternal(url);
-  return true;
 }
 
 class CategoryLabel extends StatelessWidget {
@@ -319,42 +309,3 @@ class Wordmark extends StatelessWidget {
   }
 }
 
-/// Inline pitch shown where a Premium feature would be.
-class PremiumPitch extends StatelessWidget {
-  const PremiumPitch({super.key, required this.title, required this.body, this.upgradeUrl, this.signedIn = true});
-
-  final String title;
-  final String body;
-  final String? upgradeUrl;
-  final bool signedIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: p.lineStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: display(size: 17, color: p.ink)),
-          const SizedBox(height: 6),
-          Text(body, style: reading(size: 16.5, color: p.ink2)),
-          const SizedBox(height: 14),
-          Wrap(spacing: 10, runSpacing: 8, children: [
-            if (showUpgradeLinks)
-              FilledButton(
-                onPressed: () => openPremiumOnWeb(upgradeUrl),
-                child: Text('Get Premium for ${Brand.premiumPrice}/mo'),
-              ),
-            if (!signedIn)
-              OutlinedButton(onPressed: () => context.push('/login'), child: const Text('Sign in')),
-          ]),
-        ],
-      ),
-    );
-  }
-}

@@ -18,10 +18,12 @@ void main() {
     expect(item.analysis, isNull);
   });
 
-  test('User capabilities default to anonymous when missing', () {
+  test('User capabilities default to public reading when missing', () {
     final user = User.fromJson({'id': '1', 'email': 'a@b.co'});
     expect(user.capabilities.readNews, isTrue);
-    expect(user.capabilities.accessDailyBrief, isFalse);
+    expect(user.capabilities.accessDailyBrief, isTrue);
+    expect(user.capabilities.participateInThreads, isFalse);
+    expect(user.briefEmails, isTrue);
     expect(user.isStaff, isFalse);
   });
 }

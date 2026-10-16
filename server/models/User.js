@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Global Super Intelligence News has two audiences: anonymous/free readers (who can read the
-// whole news feed) and Premium members (Daily Brief, deep analysis, and
-// posting in discussions). Accounts are free; Premium is a Stripe subscription
-// or an admin-granted override.
+// GSIN is free to read for everyone. An account (also free) is needed to
+// post in discussions, save stories, follow topics, and get the brief email.
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
@@ -18,36 +16,14 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: { type: String, required: true, select: false },
 
-    // Stripe / subscription state
-    stripeCustomerId: { type: String, index: true },
-    stripeSubscriptionId: { type: String },
-    subscriptionStatus: {
-      type: String,
-      enum: ['inactive', 'active', 'trialing', 'past_due', 'canceled', 'unpaid'],
-      default: 'inactive',
-      index: true,
-    },
-    currentPeriodEnd: { type: Date },
-
-    // Administrative entitlement override. Stripe remains the billing source
-    // of truth; this field only controls application access (comps, press
-    // passes, refunds-in-progress).
-    subscriptionOverride: {
-      type: String,
-      enum: ['none', 'active', 'inactive'],
-      default: 'none',
-      index: true,
-    },
-    subscriptionOverrideReason: { type: String, trim: true, maxlength: 500 },
-    subscriptionOverrideAt: { type: Date },
-    subscriptionOverrideBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-
     // `editor` can curate the feed (feature/hide/flag breaking) and moderate
-    // discussions; `admin` additionally manages members and entitlements.
+    // discussions; `admin` additionally manages members.
     role: { type: String, enum: ['member', 'editor', 'admin'], default: 'member' },
 
     // Reader preferences
     followedCategories: [{ type: String, trim: true }],
+    // Opt-in for the Daily Brief email that n8n sends (GET /api/subscribers).
+    briefEmails: { type: Boolean, default: true },
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'NewsItem' }],
 
     // Community state. `blockedUsers` hides those authors' comments from this
@@ -79,39 +55,8 @@ userSchema.methods.verifyPassword = function (plain) {
   return bcrypt.compare(plain, this.passwordHash);
 };
 
-// Paid (or comped) Premium membership.
-userSchema.methods.hasAccess = function () {
-  if (this.subscriptionOverride === 'active') return true;
-  if (this.subscriptionOverride === 'inactive') return false;
-  return ['active', 'trialing'].includes(this.subscriptionStatus);
-};
-
-userSchema.methods.effectiveSubscriptionStatus = function () {
-  if (this.subscriptionOverride === 'active') return 'active';
-  if (this.subscriptionOverride === 'inactive') return 'inactive';
-  return this.subscriptionStatus;
-};
-
 userSchema.methods.isStaff = function () {
   return ['editor', 'admin'].includes(this.role);
-};
-
-// Premium features are open to paying members and staff.
-userSchema.methods.isPremium = function () {
-  return this.isStaff() || this.hasAccess();
-};
-
-// Query equivalent of hasAccess(), for metrics and subscriber lists.
-userSchema.statics.activeAccessFilter = function () {
-  return {
-    $or: [
-      { subscriptionOverride: 'active' },
-      {
-        subscriptionOverride: { $nin: ['active', 'inactive'] },
-        subscriptionStatus: { $in: ['active', 'trialing'] },
-      },
-    ],
-  };
 };
 
 userSchema.methods.toPublic = function () {
@@ -120,14 +65,8 @@ userSchema.methods.toPublic = function () {
     name: this.name,
     email: this.email,
     role: this.role,
-    subscriptionStatus: this.effectiveSubscriptionStatus(),
-    billingSubscriptionStatus: this.subscriptionStatus,
-    subscriptionOverride: this.subscriptionOverride || 'none',
-    subscriptionOverrideReason: this.subscriptionOverrideReason,
-    currentPeriodEnd: this.currentPeriodEnd,
-    hasAccess: this.hasAccess(),
-    isPremium: this.isPremium(),
     followedCategories: this.followedCategories || [],
+    briefEmails: this.briefEmails !== false,
     bookmarkCount: (this.bookmarks || []).length,
     mustChangePassword: !!this.mustChangePassword,
   };

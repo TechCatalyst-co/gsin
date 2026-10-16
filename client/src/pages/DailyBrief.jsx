@@ -1,37 +1,32 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { useAuth } from '../auth/AuthContext';
 import { BRAND } from '../brand';
 import CategoryTag from '../components/CategoryTag';
+import AdSlot from '../components/AdSlot';
+import { Fragment } from 'react';
 import { useDocumentTitle } from './Home';
 
 const dayLabel = (ymd) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
 export default function DailyBrief() {
-  const { user, loading } = useAuth();
   const [params, setParams] = useSearchParams();
   const date = params.get('date');
   const [brief, setBrief] = useState(undefined);
   const [dates, setDates] = useState([]);
   const [error, setError] = useState('');
-  const allowed = !!user?.capabilities?.accessDailyBrief;
   useDocumentTitle(`Daily Brief — ${BRAND.short}`);
 
   useEffect(() => {
-    if (!allowed) return;
     setBrief(undefined);
     api(date ? `/daily-brief/${date}` : '/daily-brief/latest')
       .then((d) => setBrief(d.brief))
       .catch((e) => { setError(e.message); setBrief(null); });
-  }, [allowed, date]);
+  }, [date]);
 
   useEffect(() => {
-    if (allowed) api('/daily-brief/dates').then((d) => setDates(d.dates || [])).catch(() => {});
-  }, [allowed]);
-
-  if (loading) return <div className="center muted">Loading…</div>;
-  if (!allowed) return <BriefPitch signedIn={!!user} />;
+    api('/daily-brief/dates').then((d) => setDates(d.dates || [])).catch(() => {});
+  }, []);
 
   return (
     <div className="shell brief">
@@ -67,8 +62,9 @@ export default function DailyBrief() {
           <section>
             <h2 className="section-h">The stories</h2>
             <ol className="brief-items">
-              {brief.items.map((i) => (
-                <li key={i.url} className="brief-item">
+              {brief.items.map((i, n) => (
+                <Fragment key={i.url}>
+                <li className="brief-item">
                   <div className="brief-item-top">
                     <CategoryTag name={i.category} />
                     {i.urgent && <span className="flag-breaking">Breaking</span>}
@@ -80,6 +76,8 @@ export default function DailyBrief() {
                   {i.impact && <p className="brief-item-why"><strong>Why it matters.</strong> {i.impact}</p>}
                   {i.slug && i.commentCount > 0 && <Link className="small" to={`/story/${i.slug}#disc`}>{i.commentCount} comments</Link>}
                 </li>
+                {n === 2 && brief.items.length > 4 && <li className="brief-ad"><AdSlot placement="brief-inline" /></li>}
+                </Fragment>
               ))}
             </ol>
           </section>
@@ -89,20 +87,3 @@ export default function DailyBrief() {
   );
 }
 
-function BriefPitch({ signedIn }) {
-  return (
-    <div className="shell narrow">
-      <div className="pitch">
-        <h1>The Daily Brief</h1>
-        <p className="pitch-lede">One edition every morning. The handful of AI stories that actually moved the field, each with a plain-language note on why it matters.</p>
-        <ul className="pitch-list">
-          <li>Read in about five minutes, on the web, in the app, or by email</li>
-          <li>Searchable archive of past editions</li>
-          <li>Comes with extended analysis on stories and posting in discussions</li>
-        </ul>
-        <Link to="/premium" className="btn primary">Get Premium for {BRAND.premiumPrice}/mo</Link>
-        {!signedIn && <p className="muted small">Already a member? <Link to="/login" state={{ from: '/brief' }}>Sign in</Link></p>}
-      </div>
-    </div>
-  );
-}

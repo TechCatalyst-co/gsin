@@ -6,7 +6,7 @@ import 'common.dart';
 
 String _fmtWhen(DateTime? d) => timeAgo(d);
 
-const _badgeLabel = {'staff': 'Editor', 'premium': 'Premium'};
+const _badgeLabel = {'staff': 'Editor'};
 
 /// One row of the discussion thread. The trailing "…" opens the bottom sheet
 /// with Reply / Report / Block / Delete — the App-Store-visible moderation UX.

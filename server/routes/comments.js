@@ -13,7 +13,7 @@ const router = express.Router();
 
 function badgeFor(user) {
   if (user.isStaff()) return 'staff';
-  return user.hasAccess() ? 'premium' : 'member';
+  return 'member';
 }
 
 function isBlocked(user, authorId) {
@@ -51,6 +51,7 @@ function rejectIfBanned(req, res) {
 }
 
 // GET /api/comments?newsItem=<id> — PUBLIC. Flat list; clients build the tree.
+// `canPost` is true for any signed-in, non-banned reader.
 router.get('/', readLimiter, optionalAuth, async (req, res) => {
   try {
     const { newsItem } = req.query;
@@ -60,7 +61,7 @@ router.get('/', readLimiter, optionalAuth, async (req, res) => {
     res.json({
       comments: comments.map((c) => serialize(c, req.user)),
       total: comments.length,
-      canPost: caps.participateInThreads,
+      canPost: caps.participateInThreads && !req.user?.banned,
     });
   } catch (err) {
     console.error('comments fetch error:', err);

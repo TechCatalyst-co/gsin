@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND } from '../brand';
 import BreakingBar from '../components/BreakingBar';
+import AdSlot from '../components/AdSlot';
 import { StoryLead, StoryList, StoryRow } from '../components/Story';
 import { storyPath } from '../format';
 
@@ -56,12 +57,13 @@ export default function Home() {
                   </div>
                 )}
                 <h2 id="latest-h" className="section-h">Latest</h2>
-                <StoryList items={latest} />
+                <StoryList items={latest} adEvery={6} adPlacement="home-feed" />
                 <Link to="/search" className="more-link">Browse all stories</Link>
               </section>
 
               <aside className="front-side">
-                <BriefPromo user={user} />
+                <BriefPromo />
+                <AdSlot placement="home-sidebar" />
                 {mostDiscussed.length > 0 && (
                   <section className="side-block" aria-labelledby="disc-h">
                     <h2 id="disc-h" className="section-h">Most discussed this week</h2>
@@ -94,21 +96,12 @@ export default function Home() {
   );
 }
 
-function BriefPromo({ user }) {
-  if (user?.capabilities?.accessDailyBrief) {
-    return (
-      <section className="brief-promo">
-        <h2>Today’s Daily Brief is ready</h2>
-        <p>The day in AI, summarized in five minutes.</p>
-        <Link to="/brief" className="btn primary sm">Read the brief</Link>
-      </section>
-    );
-  }
+function BriefPromo() {
   return (
     <section className="brief-promo">
       <h2>The Daily Brief</h2>
-      <p>Every morning: the stories that moved AI forward, why they matter, and what to watch next. Included with Premium.</p>
-      <Link to="/premium" className="btn primary sm">Get Premium for {BRAND.premiumPrice}/mo</Link>
+      <p>Every morning: the stories that moved AI forward, why they matter, and what to watch next. Free, here or by email.</p>
+      <Link to="/brief" className="btn primary sm">Read today’s brief</Link>
     </section>
   );
 }

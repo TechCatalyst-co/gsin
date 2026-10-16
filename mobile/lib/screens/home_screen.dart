@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../auth/auth_state.dart';
-import '../brand.dart';
+import '../ads.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Reload when the signed-in user changes (Premium fields differ).
+    // Reload when the signed-in user changes (bookmarks, staff fields).
     final uid = Provider.of<AuthState>(context).user?.id ?? '';
     if (_loadedFor != uid) {
       _loadedFor = uid;
@@ -89,9 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
               const SectionLabel('Editors’ picks'),
               for (final i in featured.take(3)) StoryTile(item: i, compact: true),
             ],
-            _BriefCard(premium: user?.capabilities.accessDailyBrief ?? false, upgradeUrl: user?.upgradeUrl),
+            const _BriefCard(),
             const SectionLabel('Latest'),
-            for (final i in latest) StoryTile(item: i),
+            for (var n = 0; n < latest.length; n++) ...[
+              StoryTile(item: latest[n]),
+              if ((n + 1) % 6 == 0 && n < latest.length - 1) const AdSlot(AdPlacement.homeFeed),
+            ],
             if (discussed.isNotEmpty) ...[
               const SectionLabel('Most discussed this week'),
               for (final i in discussed) StoryTile(item: i, compact: true),
@@ -139,9 +142,7 @@ class _BreakingStrip extends StatelessWidget {
 }
 
 class _BriefCard extends StatelessWidget {
-  const _BriefCard({required this.premium, this.upgradeUrl});
-  final bool premium;
-  final String? upgradeUrl;
+  const _BriefCard();
 
   @override
   Widget build(BuildContext context) {
@@ -153,20 +154,14 @@ class _BriefCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(premium ? 'Today’s Daily Brief is ready' : 'The Daily Brief',
-              style: display(size: 21, weight: FontWeight.w800, color: p.paper)),
+          Text('The Daily Brief', style: display(size: 21, weight: FontWeight.w800, color: p.paper)),
           const SizedBox(height: 6),
           Text(
-            premium
-                ? 'The day in AI, summarized in five minutes.'
-                : 'Every morning: the stories that moved AI forward and why they matter. Included with Premium.',
+            'Every morning: the stories that moved AI forward, why they matter, and what to watch next.',
             style: reading(size: 16, color: p.paper.withValues(alpha: 0.82)),
           ),
           const SizedBox(height: 14),
-          FilledButton(
-            onPressed: () => context.go('/brief'),
-            child: Text(premium ? 'Read the brief' : 'See Premium (${Brand.premiumPrice}/mo)'),
-          ),
+          FilledButton(onPressed: () => context.go('/brief'), child: const Text('Read today’s brief')),
         ],
       ),
     );

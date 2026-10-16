@@ -37,7 +37,7 @@ class NewsItem {
   final String? summary;
   final String? impact;
 
-  /// Premium body; null for readers without access even when [hasAnalysis].
+  /// Longer analysis from the n8n pipeline; optional.
   final String? analysis;
   final bool hasAnalysis;
   final bool urgent;

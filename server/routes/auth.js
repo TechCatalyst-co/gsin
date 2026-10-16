@@ -7,16 +7,9 @@ const { authLimiter } = require('../middleware/rateLimit');
 const { capabilitiesFor } = require('../utils/capabilities');
 
 // The wire shape for the signed-in user: the public profile plus the resolved
-// tier capabilities, so neither client duplicates the permission matrix.
-// upgradeUrl points mobile's "Upgrade on the web" link-out at the right web
-// deployment without baking a URL into the app binary.
+// capabilities, so neither client duplicates the access rules.
 function publicUserWithCapabilities(user) {
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-  return {
-    ...user.toPublic(),
-    capabilities: capabilitiesFor(user),
-    upgradeUrl: `${clientUrl}/upgrade`,
-  };
+  return { ...user.toPublic(), capabilities: capabilitiesFor(user) };
 }
 
 const router = express.Router();

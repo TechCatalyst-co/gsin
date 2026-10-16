@@ -18,7 +18,7 @@ const newsItemSchema = new mongoose.Schema(
     headline: { type: String, trim: true },
     summary: { type: String, trim: true },
     impact: { type: String, trim: true },
-    // Premium layer: longer-form analysis written by the n8n pipeline.
+    // Longer-form analysis written by the n8n pipeline (optional).
     analysis: { type: String, trim: true },
     // Breaking-news flag — drives the urgent banner.
     urgent: { type: Boolean, default: false, index: true },

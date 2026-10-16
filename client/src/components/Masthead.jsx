@@ -34,13 +34,12 @@ export default function Masthead() {
               {user.capabilities?.curate && <NavLink to="/admin" className="link">Newsroom</NavLink>}
               <NavLink to="/saved" className="link">Saved</NavLink>
               <NavLink to="/account" className="link">Account</NavLink>
-              {!user.isPremium && <Link to="/premium" className="btn primary sm">Go Premium</Link>}
               <button className="link" onClick={async () => { await logout(); nav('/'); }}>Sign out</button>
             </>
           ) : (
             <>
               <NavLink to="/login" className="link">Sign in</NavLink>
-              <Link to="/premium" className="btn primary sm">Go Premium</Link>
+              <Link to="/register" className="btn primary sm">Create free account</Link>
             </>
           )}
         </div>

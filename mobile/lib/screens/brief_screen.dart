@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
-import '../auth/auth_state.dart';
-import '../brand.dart';
-import '../config.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
-/// Premium Daily Brief with an edition picker. Non-Premium readers see the
-/// pitch instead.
+/// The Daily Brief with an edition picker. Free for everyone.
 class BriefScreen extends StatefulWidget {
   const BriefScreen({super.key});
 
@@ -27,19 +24,11 @@ class _BriefScreenState extends State<BriefScreen> {
   bool _loading = false;
   bool _empty = false;
   String? _error;
-  bool _allowedLoaded = false;
-
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final allowed = Provider.of<AuthState>(context).user?.capabilities.accessDailyBrief ?? false;
-    if (allowed && !_allowedLoaded) {
-      _allowedLoaded = true;
-      _load();
-      _loadDates();
-    } else if (!allowed) {
-      _allowedLoaded = false;
-    }
+  void initState() {
+    super.initState();
+    _load();
+    _loadDates();
   }
 
   Future<void> _loadDates() async {
@@ -75,9 +64,6 @@ class _BriefScreenState extends State<BriefScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final auth = context.watch<AuthState>();
-    final allowed = auth.user?.capabilities.accessDailyBrief ?? false;
-    if (!allowed) return _Pitch(signedIn: auth.isAuthed, upgradeUrl: auth.user?.upgradeUrl);
 
     final brief = _brief;
     return RefreshIndicator(
@@ -145,7 +131,10 @@ class _BriefScreenState extends State<BriefScreen> {
               ),
             ),
             const SectionLabel('The stories'),
-            for (var i = 0; i < brief.items.length; i++) _BriefRow(n: i + 1, item: brief.items[i]),
+            for (var i = 0; i < brief.items.length; i++) ...[
+              _BriefRow(n: i + 1, item: brief.items[i]),
+              if (i == 2 && brief.items.length > 4) const AdSlot(AdPlacement.briefInline),
+            ],
           ],
         ],
       ),
@@ -206,54 +195,3 @@ class _BriefRow extends StatelessWidget {
   }
 }
 
-class _Pitch extends StatelessWidget {
-  const _Pitch({required this.signedIn, this.upgradeUrl});
-  final bool signedIn;
-  final String? upgradeUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text('The Daily Brief', style: display(size: 34, weight: FontWeight.w800, color: p.ink)),
-        const SizedBox(height: 12),
-        Text(
-          'One edition every morning. The handful of AI stories that actually moved the field, each with a plain-language note on why it matters.',
-          style: reading(size: 19, color: p.ink2),
-        ),
-        const SizedBox(height: 16),
-        for (final line in const [
-          'Read in about five minutes, here or by email',
-          'Archive of past editions',
-          'Comes with extended analysis and posting in discussions',
-        ])
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('•  ', style: reading(size: 17, color: p.signal)),
-              Expanded(child: Text(line, style: reading(size: 17, color: p.ink))),
-            ]),
-          ),
-        const SizedBox(height: 16),
-        if (showUpgradeLinks)
-          FilledButton(
-            onPressed: () => openPremiumOnWeb(upgradeUrl),
-            child: Text('Get Premium for ${Brand.premiumPrice}/mo'),
-          )
-        else
-          Text('Premium is available on our website.', style: TextStyle(color: p.slate)),
-        if (!signedIn) ...[
-          const SizedBox(height: 10),
-          OutlinedButton(onPressed: () => context.push('/login'), child: const Text('Already a member? Sign in')),
-        ],
-        if (signedIn && showUpgradeLinks) ...[
-          const SizedBox(height: 10),
-          Text('After subscribing on the web, come back here and the brief unlocks automatically.',
-              style: TextStyle(color: p.slate, fontSize: 13.5)),
-        ],
-      ],
-    );
-  }
-}

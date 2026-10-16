@@ -4,14 +4,11 @@ import { useAuth } from '../../auth/AuthContext';
 
 const fmtDate = (d) => new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
-const statusBadge = (s) =>
-  ['active', 'trialing'].includes(s) ? 'badge active' : ['past_due', 'unpaid'].includes(s) ? 'badge warn' : 'badge';
-
 const ROLES = ['member', 'editor', 'admin'];
 const roleLabel = { member: 'member', editor: 'editor (curates the feed, moderates)', admin: 'admin' };
 
 function CreateUserForm({ busy, onCancel, onCreate }) {
-  const [form, setForm] = useState({ name: '', email: '', role: 'member', premium: false });
+  const [form, setForm] = useState({ name: '', email: '', role: 'member' });
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
   return (
     <form className="admin-panel admin-create" onSubmit={(e) => { e.preventDefault(); onCreate(form); }}>
@@ -20,7 +17,6 @@ function CreateUserForm({ busy, onCancel, onCreate }) {
         <label>Name<input value={form.name} onChange={set('name')} /></label>
         <label>Email<input type="email" required value={form.email} onChange={set('email')} /></label>
         <label>Role<select value={form.role} onChange={set('role')}>{ROLES.map((r) => <option key={r}>{r}</option>)}</select></label>
-        <label className="tier-toggle"><input type="checkbox" checked={form.premium} onChange={set('premium')} /> Grant Premium now</label>
       </div>
       <p className="muted">A temporary password will be generated and shown once.</p>
       <div className="actions"><button className="btn primary sm" disabled={busy}>{busy ? 'Creating…' : 'Create user'}</button><button type="button" className="btn ghost sm" disabled={busy} onClick={onCancel}>Cancel</button></div>
@@ -92,14 +88,6 @@ export default function AdminMembers() {
     } catch (err) { setError(err.message); } finally { setBusy(''); setPending(null); }
   };
 
-  const updateSubscription = async (u, body) => {
-    setBusy(u.id); setError('');
-    try {
-      const data = await api(`/admin/users/${u.id}/subscription`, { method: 'PATCH', body });
-      setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, ...data.user } : x));
-    } catch (err) { setError(err.message); } finally { setBusy(''); setPending(null); }
-  };
-
   return (
     <>
       <div className="toolbar admin-members-bar">
@@ -140,7 +128,7 @@ export default function AdminMembers() {
             <thead>
               <tr>
                 <th>Member</th>
-                <th>Subscription</th>
+                <th>Status</th>
                 <th>Role</th>
                 <th>Joined</th>
                 <th></th>
@@ -156,10 +144,8 @@ export default function AdminMembers() {
                       <div className="muted" style={{ fontSize: 12 }}>{u.email}</div>
                     </td>
                     <td>
-                      <span className={statusBadge(u.subscriptionStatus)}>{u.subscriptionStatus}</span>
-                      {u.subscriptionOverride !== 'none' && <span className="badge warn" style={{ marginLeft: 6 }}>manual {u.subscriptionOverride}</span>}
-                      {u.billingSubscriptionStatus && u.billingSubscriptionStatus !== u.subscriptionStatus && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Stripe: {u.billingSubscriptionStatus}</div>}
-                      {u.banned && <span className="badge warn" style={{ marginLeft: 6 }}>banned</span>}
+                      <span className={u.banned ? 'badge warn' : 'badge active'}>{u.banned ? 'banned' : 'active'}</span>
+                      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{u.briefEmails ? 'Gets the brief email' : 'No brief email'}</div>
                     </td>
                     <td>
                       <select
@@ -180,12 +166,8 @@ export default function AdminMembers() {
                         {pending?.id === u.id ? (
                           <>
                             <span className="muted confirm-message">{pending.label}</span>
-                            {pending.kind === 'subscription-inactive' && <input placeholder="Reason required" maxLength={500} value={pending.reason || ''} onChange={(e) => setPending({ ...pending, reason: e.target.value })} />}
-                            <button className="danger" disabled={busy === u.id || (pending.kind === 'subscription-inactive' && !pending.reason?.trim())} onClick={() => {
+                            <button className="danger" disabled={busy === u.id} onClick={() => {
                               if (pending.kind === 'reset') return resetPassword(u);
-                              if (pending.kind === 'subscription-active') return updateSubscription(u, { override: 'active', reason: 'Granted by administrator' });
-                              if (pending.kind === 'subscription-inactive') return updateSubscription(u, { override: 'inactive', reason: pending.reason });
-                              if (pending.kind === 'subscription-none') return updateSubscription(u, { override: 'none' });
                               return patch(u, pending.body);
                             }}>
                               Confirm
@@ -203,16 +185,13 @@ export default function AdminMembers() {
                                   body: { banned: !u.banned },
                                   label: u.banned
                                     ? 'Unban — they can post again.'
-                                    : 'Ban blocks posting only; cancel their Stripe subscription separately if refusing service.',
+                                    : 'Ban blocks posting; they can still read.',
                                 })
                               }
                             >
                               {u.banned ? 'Unban' : 'Ban'}
                             </button>
                             {!self && <button onClick={() => setPending({ id: u.id, kind: 'reset', label: 'Reset password and sign out all existing sessions?' })}>Reset password</button>}
-                            {!self && u.subscriptionOverride !== 'active' && <button onClick={() => setPending({ id: u.id, kind: 'subscription-active', label: 'Grant Premium without billing?' })}>Grant Premium</button>}
-                            {!self && u.subscriptionOverride !== 'inactive' && <button className="danger" onClick={() => setPending({ id: u.id, kind: 'subscription-inactive', reason: '', label: 'Revoke Premium access?' })}>Revoke Premium</button>}
-                            {u.subscriptionOverride !== 'none' && <button onClick={() => setPending({ id: u.id, kind: 'subscription-none', label: 'Return access control to Stripe?' })}>Use Stripe</button>}
                           </>
                         )}
                       </div>

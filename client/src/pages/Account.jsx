@@ -1,56 +1,31 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND, CATEGORIES } from '../brand';
 import { useDocumentTitle } from './Home';
 
-const LABEL = {
-  active: 'Active',
-  trialing: 'Trial',
-  past_due: 'Payment past due',
-  canceled: 'Canceled',
-  unpaid: 'Unpaid',
-  inactive: 'Free account',
-};
-
 export default function Account() {
   const { user, refresh } = useAuth();
-  const [params] = useSearchParams();
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState(params.get('checkout') === 'success' ? 'Payment received. Turning on Premium…' : '');
   const [topics, setTopics] = useState(user?.followedCategories || []);
-  const [savedTopics, setSavedTopics] = useState('');
+  const [status, setStatus] = useState('');
   useDocumentTitle(`Account — ${BRAND.short}`);
 
-  useEffect(() => {
-    if (params.get('checkout') === 'success') {
-      const t = setTimeout(() => refresh().then(() => setMsg('Premium is on. Welcome aboard.')), 2500);
-      return () => clearTimeout(t);
-    }
-  }, [params, refresh]);
-
-  const manage = async () => {
-    setBusy(true);
+  const save = async (path, body) => {
+    setStatus('');
     try {
-      const { url } = await api('/billing/portal', { method: 'POST' });
-      window.location.href = url;
+      await api(path, { method: 'PUT', body });
+      setStatus('Saved');
+      refresh();
     } catch (err) {
-      setMsg(err.message);
-      setBusy(false);
+      setStatus(err.message);
     }
   };
 
-  const toggleTopic = async (name) => {
+  const toggleTopic = (name) => {
     const next = topics.includes(name) ? topics.filter((t) => t !== name) : [...topics, name];
     setTopics(next);
-    setSavedTopics('');
-    try {
-      await api('/me/categories', { method: 'PUT', body: { categories: next } });
-      setSavedTopics('Saved');
-    } catch (err) {
-      setSavedTopics(err.message);
-    }
+    save('/me/categories', { categories: next });
   };
 
   if (!user) return null;
@@ -58,26 +33,28 @@ export default function Account() {
   return (
     <div className="shell narrow account">
       <h1>Account</h1>
-      {msg && <div className="alert soft">{msg}</div>}
 
       <dl className="kv">
         <div><dt>Name</dt><dd>{user.name || 'Not set'}</dd></div>
         <div><dt>Email</dt><dd>{user.email}</dd></div>
-        <div><dt>Membership</dt><dd>{user.isPremium ? (user.role === 'member' ? `Premium (${LABEL[user.subscriptionStatus] || user.subscriptionStatus})` : `Staff (${user.role})`) : LABEL[user.subscriptionStatus] || 'Free account'}</dd></div>
-        {user.currentPeriodEnd && user.hasAccess && <div><dt>Renews</dt><dd>{new Date(user.currentPeriodEnd).toLocaleDateString()}</dd></div>}
+        {user.role !== 'member' && <div><dt>Role</dt><dd>{user.role === 'admin' ? 'Admin' : 'Editor'}</dd></div>}
       </dl>
 
-      <div className="actions-row">
-        {user.hasAccess || user.billingSubscriptionStatus !== 'inactive' ? (
-          <button className="btn ghost" onClick={manage} disabled={busy}>{busy ? 'Opening…' : 'Manage billing'}</button>
-        ) : null}
-        {!user.isPremium && <Link to="/premium" className="btn primary">Go Premium for {BRAND.premiumPrice}/mo</Link>}
-        <Link to="/change-password" className="btn ghost">Change password</Link>
-      </div>
+      <section className="topics-pref" aria-labelledby="email-h">
+        <h2 id="email-h" className="section-h">Email</h2>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={user.briefEmails !== false}
+            onChange={(e) => save('/me/preferences', { briefEmails: e.target.checked })}
+          />
+          Send me the Daily Brief each morning
+        </label>
+      </section>
 
       <section className="topics-pref" aria-labelledby="topics-h">
         <h2 id="topics-h" className="section-h">Topics you follow</h2>
-        <p className="muted">Stories from these topics appear under Saved, and in the app’s For You tab.</p>
+        <p className="muted">Stories from these topics appear under Saved, and in the app’s For you tab.</p>
         <div className="topic-toggles">
           {CATEGORIES.map((c) => {
             const on = topics.includes(c.name);
@@ -88,9 +65,12 @@ export default function Account() {
             );
           })}
         </div>
-        {savedTopics && <p className="muted small" role="status">{savedTopics}</p>}
       </section>
+      {status && <p className="muted small" role="status">{status}</p>}
 
+      <div className="actions-row">
+        <Link to="/change-password" className="btn ghost">Change password</Link>
+      </div>
       <p className="muted small"><Link to="/delete-account">Request account deletion</Link></p>
     </div>
   );

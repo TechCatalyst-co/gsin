@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { Fragment } from 'react';
 import CategoryTag from './CategoryTag';
+import AdSlot from './AdSlot';
 import { storyPath, timeAgo } from '../format';
 
 function Meta({ item, showCategory = true }) {
@@ -54,7 +56,18 @@ export function StoryRow({ item, showCategory = true, compact = false }) {
   );
 }
 
-export function StoryList({ items, empty = 'No stories yet.', ...rest }) {
+// `adEvery` inserts an ad slot after every N stories (renders nothing while
+// ads are off).
+export function StoryList({ items, empty = 'No stories yet.', adEvery = 0, adPlacement = 'feed-inline', ...rest }) {
   if (!items?.length) return <p className="muted empty-line">{empty}</p>;
-  return <div className="rows">{items.map((i) => <StoryRow key={i._id} item={i} {...rest} />)}</div>;
+  return (
+    <div className="rows">
+      {items.map((i, n) => (
+        <Fragment key={i._id}>
+          <StoryRow item={i} {...rest} />
+          {adEvery > 0 && (n + 1) % adEvery === 0 && n < items.length - 1 && <AdSlot placement={adPlacement} />}
+        </Fragment>
+      ))}
+    </div>
+  );
 }

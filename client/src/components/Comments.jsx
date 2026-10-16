@@ -27,9 +27,9 @@ function buildTree(flat) {
   return roots;
 }
 
-const BADGE = { staff: 'Editor', premium: 'Premium' };
+const BADGE = { staff: 'Editor' };
 
-// Discussion under a story. Readable by everyone; posting is Premium.
+// Discussion under a story. Readable by everyone; posting needs a free account.
 export default function CommentsPanel({ newsItemId, onCountChange }) {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
@@ -88,8 +88,8 @@ export default function CommentsPanel({ newsItemId, onCountChange }) {
       ) : (
         <div className="comment-gate">
           {user
-            ? <>Premium members can post. <Link to="/premium">See Premium</Link></>
-            : <><Link to="/login">Sign in</Link> to join the discussion. Posting is part of <Link to="/premium">Premium</Link>.</>}
+            ? <>Your account can’t post right now. Contact the editors if you think this is a mistake.</>
+            : <><Link to="/login">Sign in</Link> or <Link to="/register">create a free account</Link> to join the discussion.</>}
         </div>
       )}
       {tree.length === 0 && <p className="muted">No comments yet.</p>}

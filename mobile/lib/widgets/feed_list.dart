@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../models/news_item.dart';
@@ -116,7 +117,10 @@ class _FeedListState extends State<FeedList> {
                 }
                 return const SizedBox(height: 32);
               }
-              return StoryTile(item: _items[i - 1], showCategory: widget.showCategory);
+              final n = i - 1;
+              final tile = StoryTile(item: _items[n], showCategory: widget.showCategory);
+              if ((n + 1) % 8 != 0 || n == _items.length - 1) return tile;
+              return Column(children: [tile, const AdSlot(AdPlacement.feedInline)]);
             },
           ),
         ),

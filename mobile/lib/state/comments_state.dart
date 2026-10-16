@@ -12,7 +12,7 @@ typedef ThreadEntry = ({Comment comment, int depth});
 
 /// Discussion thread under one story — the Flutter counterpart of
 /// client/src/components/Comments.jsx. Readable by everyone; posting needs
-/// the participateInThreads capability (Premium).
+/// a free account.
 class CommentsState extends ChangeNotifier {
   CommentsState(this._api, this._auth, this.newsItemId);
 
@@ -35,7 +35,7 @@ class CommentsState extends ChangeNotifier {
   bool get loading => _loading;
   bool get loaded => _loaded;
 
-  /// Server says this viewer may post (Premium or staff).
+  /// Server says this viewer may post (signed in and not banned).
   bool get canPost => _canPost;
   String? get error => _error;
   int get visibleCount => _comments.where((c) => !c.removed).length;
