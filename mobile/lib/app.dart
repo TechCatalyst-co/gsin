@@ -55,7 +55,7 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // A tapped alert opens its story on top of the feed. On a cold start the
+  // A tapped alert opens its story on top of the Daily Brief. On a cold start the
   // splash is still deciding auth, so the story waits until it has.
   void _openAlert(BreakingAlert alert) {
     _pendingAlert = alert;
@@ -67,7 +67,7 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     if (alert == null || widget.auth.status == AuthStatus.unknown) return;
     _pendingAlert = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_router.state.matchedLocation == '/splash') _router.go('/');
+      if (_router.state.matchedLocation == '/splash') _router.go('/brief');
       _router.push('/story/${Uri.encodeComponent(alert.slug)}');
     });
   }
@@ -106,7 +106,8 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       final loc = state.matchedLocation;
       final auth = widget.auth;
       if (auth.status == AuthStatus.unknown) return loc == '/splash' ? null : '/splash';
-      if (loc == '/splash') return '/';
+      // The app opens on the Daily Brief.
+      if (loc == '/splash') return '/brief';
       final user = auth.user;
       if (user != null && user.mustChangePassword && loc != '/change-password') return '/change-password';
       if (loc == '/change-password' && user == null) return '/login';

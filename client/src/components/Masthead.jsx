@@ -31,7 +31,7 @@ export default function Masthead() {
         <div className="masthead-account">
           {user ? (
             <>
-              {user.capabilities?.curate && <NavLink to="/admin" className="link">Newsroom</NavLink>}
+              {user.capabilities?.curate && <NavLink to="/admin" className="link">Admin</NavLink>}
               <NavLink to="/saved" className="link">Saved</NavLink>
               <NavLink to="/account" className="link">Account</NavLink>
               <button className="link" onClick={async () => { await logout(); nav('/'); }}>Sign out</button>
@@ -49,7 +49,7 @@ export default function Masthead() {
       </div>
       <nav id="desk-nav" className={`desks${menuOpen ? ' open' : ''}`} aria-label="Topics">
         <div className="shell desks-row">
-          <NavLink to="/" end className="desk">Top stories</NavLink>
+          <NavLink to="/newsroom" end className="desk">Top stories</NavLink>
           <NavLink to="/brief" className="desk desk--brief">Daily Brief</NavLink>
           {CATEGORIES.map((c) => (
             <NavLink key={c.slug} to={`/topic/${c.slug}`} className="desk">{c.name}</NavLink>
@@ -60,7 +60,7 @@ export default function Masthead() {
           <div className="desks-account">
             {user ? (
               <>
-                {user.capabilities?.curate && <Link to="/admin">Newsroom</Link>}
+                {user.capabilities?.curate && <Link to="/admin">Admin</Link>}
                 <Link to="/saved">Saved</Link>
                 <Link to="/account">Account</Link>
                 <button className="link" onClick={async () => { await logout(); nav('/'); }}>Sign out</button>

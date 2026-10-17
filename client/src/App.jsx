@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute';
 import Masthead from './components/Masthead';
 import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import Topic, { Search } from './pages/Topic';
 import Story from './pages/Story';
 import DailyBrief from './pages/DailyBrief';
@@ -27,10 +28,11 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <a className="skip" href="#main">Skip to content</a>
-        <Masthead />
+        <SiteMasthead />
         <main id="main">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/newsroom" element={<Home />} />
             <Route path="/topic/:slug" element={<Topic />} />
             <Route path="/story/:slug" element={<Story />} />
             <Route path="/search" element={<Search />} />
@@ -61,4 +63,10 @@ export default function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+// The landing page carries its own top bar; every other page gets the masthead.
+function SiteMasthead() {
+  const { pathname } = useLocation();
+  return pathname === '/' ? null : <Masthead />;
 }
