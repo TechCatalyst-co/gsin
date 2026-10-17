@@ -3,8 +3,19 @@ export const BRAND = {
   name: 'Global Super Intelligence News',
   short: 'GSIN',
   tagline: 'News on artificial intelligence and the road to superintelligence, from around the world.',
-  supportEmail: 'support@example.com',
+  supportEmail: 'support@techcatalyst.co',
+  privacyEmail: 'privacy@techcatalyst.co',
 };
+
+// The legal entity behind the outlet, named in the Privacy Policy and Terms.
+export const OPERATOR = {
+  name: 'Sirlopu Technology Services, LLC',
+  dba: 'TechCatalyst',
+  website: 'https://www.techcatalyst.co',
+};
+
+// Bump when the Privacy Policy or Terms change.
+export const LEGAL_UPDATED = 'October 16, 2026';
 
 // Known desks. n8n may send any category string; unknown ones get the neutral
 // style. `hue` drives the category dot so a reader can scan desks by color.
