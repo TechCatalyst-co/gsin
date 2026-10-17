@@ -43,7 +43,7 @@ Body: one object or an array.
 | `published` | ISO date / RFC 822 | no | Aliases: `pubDate`, `isoDate`, `published_at`. Defaults to ingest time on first insert. |
 | `category` | string | no | One desk per story; see list below. Unknown values still display with a neutral color. |
 | `tags` | string[] or comma string | no | Lower-cased, max 12. Power `#tag` pages and "Trending". |
-| `urgent` | boolean | no | Breaking. Shows in the red bar for 24 h. Alias: `breaking`. |
+| `urgent` | boolean | no | Breaking. Shows in the red bar for 24 h and, if the story is under 6 h old, sends one push alert to app users. Alias: `breaking`. |
 | `headline` | string | no | One-line dek under the title. |
 | `summary` | string | no | 2–4 sentence free summary. Aliases: `description`, `contentSnippet`. |
 | `impact` | string | no | "Why it matters" (free). Alias: `why_it_matters`. |
@@ -59,7 +59,7 @@ Rename or add desks in `client/src/brand.js` and `mobile/lib/brand.dart`.
 
 | Status | Body |
 | --- | --- |
-| `200` | `{ "ok": true, "received": n, "inserted": n, "updated": n }` |
+| `200` | `{ "ok": true, "received": n, "inserted": n, "updated": n, "alerted": n }` (`alerted`: push alerts sent) |
 | `400` | `{ "error": "Empty payload" }` |
 | `400` | `{ "error": "Every item needs a title and a valid http(s) url", "invalidCount": n }` — the whole batch is rejected; filter first. |
 

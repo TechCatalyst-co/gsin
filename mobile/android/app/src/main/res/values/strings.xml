@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="breaking_channel_id" translatable="false">breaking</string>
+    <string name="breaking_channel_name">Breaking news</string>
+    <string name="breaking_channel_description">Alerts when a major AI story breaks</string>
+</resources>

@@ -75,7 +75,24 @@ In App Store Connect (<https://appstoreconnect.apple.com>):
 5. Attach the uploaded build, fill description/keywords/support URL, submit for review (typically 1–3 days).
 6. Provide a **demo account** (email + password of a seeded active user) in the review notes — reviewers must be able to log in.
 
-## 3. Every subsequent release
+## 3. Breaking-news push (Firebase Cloud Messaging)
+
+The app subscribes each device to the FCM topic `breaking` (Account → "Breaking news alerts", on by default after the permission prompt). The API sends one alert per story when it becomes urgent: n8n posts it with `urgent: true`, or an editor flags it in the Newsroom. Stories older than 6 hours or hidden never alert. Tapping an alert opens the story.
+
+Until the Firebase files below exist, the app builds and runs with push off and the toggle hidden.
+
+1. **Firebase project:** <https://console.firebase.google.com> → add project (Analytics not needed).
+2. **Android:** add an Android app with package `co.techcatalyst.gsin`, download `google-services.json` into `mobile/android/app/`. The Gradle build applies the Google Services plugin only when that file exists.
+3. **iOS:** add an iOS app with bundle ID `co.techcatalyst.gsin`, download `GoogleService-Info.plist`, then in Xcode drag it into the **Runner** group (check "Copy items if needed" and the Runner target).
+4. **APNs:** Apple Developer → Keys → create a key with Apple Push Notifications service, download the `.p8`. Firebase → Project settings → Cloud Messaging → Apple app configuration → upload it with the Key ID and Team ID. The Runner target already carries the `aps-environment` entitlement and the remote-notification background mode; push only works on a real device, not the simulator.
+5. **API:** Firebase → Project settings → Service accounts → Generate new private key. Put the JSON (raw, or `base64 -i key.json`) in the API's `FIREBASE_SERVICE_ACCOUNT` environment variable on Render. Keep it secret; it can send to every device.
+6. **Dev vs prod:** point a dev API at a different topic (`PUSH_TOPIC=breaking-dev`) and run the app with `--dart-define=PUSH_TOPIC=breaking-dev`, so testing never reaches real readers.
+
+Test: with the app installed on a phone and alerts on, flag a fresh story as breaking in the Newsroom; the notification should arrive within seconds. The API logs `push: send failed …` if FCM rejects the send.
+
+Store forms: push needs no extra Data safety / App Privacy declarations beyond "device or other IDs" being collected by Firebase for messaging (not linked to identity, not used for tracking).
+
+## 4. Every subsequent release
 
 1. Bump `version:` in `pubspec.yaml` (e.g. `1.0.1+2` — the `+build` must increase every upload).
 2. `flutter build appbundle --release` → Play Console.

@@ -12,6 +12,7 @@ A news outlet for artificial intelligence and the road to superintelligence. An 
 | Post and reply in discussions | | ✓ |
 | Save stories, follow topics ("For you") | | ✓ |
 | Daily Brief by email (on by default, can be turned off) | | ✓ |
+| Breaking-news push alerts in the app (per device, can be turned off) | ✓ | ✓ |
 
 Revenue: ad slots are built into the web and app layouts and are switched off until you configure them. See [docs/ADS.md](docs/ADS.md).
 
@@ -101,8 +102,12 @@ API (`server/.env`):
 | `API_KEY` | Shared secret for n8n |
 | `CLIENT_URL` | Web origin: CORS, RSS/sitemap links |
 | `BRAND_NAME`, `BRAND_SHORT`, `BRAND_TAGLINE` | Used in RSS (defaults: Global Super Intelligence News / GSIN) |
+| `FIREBASE_SERVICE_ACCOUNT` | Optional. Firebase service-account JSON (raw or base64) to send breaking-news push alerts; empty = off |
+| `PUSH_TOPIC` | FCM topic for alerts (default `breaking`); the app's `--dart-define=PUSH_TOPIC` must match |
 
 Web (`client/.env`, or Netlify environment variables): `VITE_API_TARGET` for the dev proxy, `API_PROXY_TARGET` on Netlify, and the ad settings. Rename or re-color in `client/src/brand.js`. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
+
+Push alerts: a story alerts once when it becomes urgent (n8n `urgent: true` or an editor's breaking flag), if it is visible and under 6 hours old. Firebase setup: [mobile/RELEASE.md](mobile/RELEASE.md#3-breaking-news-push-firebase-cloud-messaging).
 
 Ads: `VITE_ADS_PROVIDER` and slot IDs on the web, `ADS_PROVIDER` in the app. See [docs/ADS.md](docs/ADS.md).
 

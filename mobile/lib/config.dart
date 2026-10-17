@@ -26,3 +26,7 @@ const String webBaseUrl = String.fromEnvironment(
 /// Versioned API path prefix appended after [apiBaseUrl].
 const String apiPathPrefix = '/api/v1';
 
+
+/// FCM topic for breaking-news alerts. Must match the API's PUSH_TOPIC; use a
+/// separate topic (e.g. breaking-dev) for development builds.
+const String pushTopic = String.fromEnvironment('PUSH_TOPIC', defaultValue: 'breaking');

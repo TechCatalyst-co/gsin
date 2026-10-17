@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'auth/auth_state.dart';
 import 'brand.dart';
 import 'models/news_item.dart';
+import 'push/push_service.dart';
 import 'screens/account_screen.dart';
 import 'screens/brief_screen.dart';
 import 'screens/change_password_screen.dart';
@@ -20,25 +23,61 @@ import 'theme/app_theme.dart';
 import 'widgets/common.dart';
 
 class GsinApp extends StatefulWidget {
-  const GsinApp({super.key, required this.auth});
+  const GsinApp({super.key, required this.auth, required this.push});
 
   final AuthState auth;
+  final PushService push;
 
   @override
   State<GsinApp> createState() => _GsinAppState();
 }
 
 class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+  StreamSubscription<BreakingAlert>? _foregroundAlerts;
+  BreakingAlert? _pendingAlert;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.auth.addListener(_openPendingAlert);
+    widget.push.onOpen = _openAlert;
+    _foregroundAlerts = widget.push.foregroundAlerts.listen(_showForegroundAlert);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    widget.auth.removeListener(_openPendingAlert);
+    widget.push.onOpen = null;
+    _foregroundAlerts?.cancel();
     super.dispose();
+  }
+
+  // A tapped alert opens its story on top of the feed. On a cold start the
+  // splash is still deciding auth, so the story waits until it has.
+  void _openAlert(BreakingAlert alert) {
+    _pendingAlert = alert;
+    _openPendingAlert();
+  }
+
+  void _openPendingAlert() {
+    final alert = _pendingAlert;
+    if (alert == null || widget.auth.status == AuthStatus.unknown) return;
+    _pendingAlert = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_router.state.matchedLocation == '/splash') _router.go('/');
+      _router.push('/story/${Uri.encodeComponent(alert.slug)}');
+    });
+  }
+
+  void _showForegroundAlert(BreakingAlert alert) {
+    _messenger.currentState?.showSnackBar(SnackBar(
+      content: Text('Breaking: ${alert.title ?? 'new story'}', maxLines: 2, overflow: TextOverflow.ellipsis),
+      duration: const Duration(seconds: 8),
+      action: SnackBarAction(label: 'Read', onPressed: () => _openAlert(alert)),
+    ));
   }
 
   // Returning to the app re-fetches /me so role or preference changes made
@@ -119,6 +158,7 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: ThemeMode.system,
       routerConfig: _router,
+      scaffoldMessengerKey: _messenger,
       debugShowCheckedModeBanner: false,
     );
   }
