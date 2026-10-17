@@ -103,10 +103,13 @@ export default function Landing() {
                 <path d="M4 27 C14 27 20 25 24 16 C26 11 27 7 27.5 3" className="ld-curve-line" pathLength="1" />
                 <circle cx="27.5" cy="3.5" r="2.4" className="ld-curve-dot" />
               </svg>
-              <span className="ld-mark" aria-hidden="true">{BRAND.short}</span>
-              <span className="sr-only">{BRAND.name}</span>
+              {/* Two balanced lines: "Global Super" / "Intelligence News" */}
+              <span className="ld-name">
+                <span>{BRAND.name.split(' ').slice(0, 2).join(' ')}</span>
+                <span>{BRAND.name.split(' ').slice(2).join(' ')}</span>
+              </span>
             </h1>
-            <p className="ld-promise">The world’s wire for artificial intelligence and the road to superintelligence. Summarized, curated, free all day.</p>
+            <p className="ld-promise"><abbr title={BRAND.name}>{BRAND.short}</abbr> is the world’s wire for artificial intelligence and the road to superintelligence. Summarized, curated, free all day.</p>
             <div className="ld-actions">
               <Link to="/newsroom" className="ld-btn ld-btn--primary">Enter the newsroom <Arrow /></Link>
               <Link to="/brief" className="ld-btn ld-btn--quiet">Read today’s brief</Link>
