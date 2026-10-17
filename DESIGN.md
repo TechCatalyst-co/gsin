@@ -37,11 +37,11 @@ colors:
 typography:
   display:
     fontFamily: "'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif"
-    fontSize: "clamp(112px, 15.5vw, 236px)"
+    fontSize: "clamp(40px, 5.1vw, 74px)"
     fontWeight: 800
-    lineHeight: 0.74
+    lineHeight: 0.9
     letterSpacing: "-0.02em"
-    fontVariation: "'wdth' 72"
+    fontVariation: "'wdth' 74"
   headline-section:
     fontFamily: "'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif"
     fontSize: "clamp(44px, 5.4vw, 84px)"
@@ -243,7 +243,7 @@ Nine fixed hues plus a neutral for unknown desks, defined in `client/src/brand.j
 **Character:** A wide-ranging grotesque squeezed narrow and heavy for headlines gives the wire its urgency; a newspaper serif with optical sizing gives the reading text its calm. Bricolage is the page's default face; Newsreader is opted into wherever prose is meant to be read.
 
 ### Hierarchy
-- **Display** (800, clamp 112 to 236px, line-height 0.74, wdth 72): the landing GSIN mark only.
+- **Display** (800, clamp 40 to 74px, line-height 0.9, wdth 74): the landing hero's full-name lockup only, "Global Super" / "Intelligence News" on two lines beside the curve glyph (1.75em square) with a 2px signal rule between them. The name always leads; the GSIN abbreviation is introduced in the promise line beneath it and used in the top bar.
 - **Headline, section** (800, clamp 44 to 84px, 0.92, wdth 76): landing section heads. The close uses a smaller step (clamp 36 to 64px, wdth 78).
 - **Headline, lead** (800, clamp 34 to 64px, 0.98, wdth 80): the newsroom lead story.
 - **Headline, story / page** (800, clamp 32 to 54px, wdth 82): story titles; feed heads use clamp 30 to 46px at wdth 85, the brief head clamp 36 to 56px at wdth 78.
@@ -286,7 +286,7 @@ Flat, layered by tone. Paper sits under white surfaces; ink panels (brief promo,
 
 Three corner families. Every control and chip is a full pill (999px): buttons, desk pills, sort chips, tags, topic toggles, badges, search fields, the mobile menu button, admin row actions. Fields, selects, alerts and textareas use 6px. Panels and media (cards, analysis, auth card, lead and story images, stat tiles) use 12px; row thumbnails use 6px. Breaking flags and inline code are 4px. Live dots, desk dots and the back-to-top button are circles.
 
-Lines are hairlines: 1px solid for structure, 1px dashed (line-strong) for placeholder states (locked analysis, ad previews). The 2px weight appears on the lockup's signal rule, nested-comment threads, and the landing brief's call-to-action rule.
+Lines are hairlines: 1px solid for structure, 1px dashed (line-strong) for placeholder states (locked analysis, ad previews). The 2px weight appears on the masthead lockup's signal rule and the landing lockup's, nested-comment threads, and the landing brief's call-to-action rule.
 
 ## Components
 
