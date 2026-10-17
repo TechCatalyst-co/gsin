@@ -27,7 +27,7 @@ export default function Story() {
     window.scrollTo(0, 0);
   }, [slug, user?.id]);
 
-  if (error) return <div className="shell"><div className="empty"><h1>Story not found</h1><p>{error}</p><Link to="/" className="btn primary sm">Back to top stories</Link></div></div>;
+  if (error) return <div className="shell"><div className="empty"><h1>Story not found</h1><p>{error}</p><Link to="/newsroom" className="btn primary sm">Back to the newsroom</Link></div></div>;
   if (!data) return <div className="center muted">Loading…</div>;
   const { item, related } = data;
   const hasSource = isSafeHttpUrl(item.url);
