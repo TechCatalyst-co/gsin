@@ -390,7 +390,8 @@ input[type='search'] { font: inherit; color: var(--ink); }
 .footer-head { font-size: 14px; color: var(--slate); margin-bottom: 10px; }
 .footer ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
 .footer ul a { text-decoration: none; }
-.footer-copy { font-size: 13px; color: var(--slate); margin-top: 28px; }
+.footer-copy { font-size: 13px; color: var(--slate); margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+.footer-copy a { color: inherit; }
 
 .back-to-top {
   position: fixed; right: 18px; bottom: 18px; width: 44px; height: 44px; border-radius: 50%;

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BRAND, CATEGORIES } from '../brand';
+import { BRAND, CATEGORIES, OPERATOR } from '../brand';
 import Wordmark from './Wordmark';
 
 export default function Footer() {
@@ -26,7 +26,10 @@ export default function Footer() {
           </ul>
         </nav>
       </div>
-      <div className="shell footer-copy">© {new Date().getFullYear()} {BRAND.name}</div>
+      <div className="shell footer-copy">
+        <span>© {new Date().getFullYear()} {BRAND.name}</span>
+        <span>Powered by <a href={OPERATOR.website} target="_blank" rel="noopener noreferrer">{OPERATOR.dba}</a></span>
+      </div>
     </footer>
   );
 }
