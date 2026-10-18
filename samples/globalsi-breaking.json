@@ -1,0 +1,94 @@
+{
+  "kind": "radar_breaking",
+  "brand": "Global SI News",
+  "generated_at": "2026-10-18T16:55:58.113Z",
+  "date": "October 18, 2026",
+  "total": 2,
+  "urgent_count": 2,
+  "threat_count": 1,
+  "summary_text": "OpenAI releases GPT-6.2 Astra with autonomous computer use (+1 more)",
+  "push": {
+    "heading": "Global SI News \u2014 Breaking: Frontier Models & AGI",
+    "body": "OpenAI releases GPT-6.2 Astra with autonomous computer use (+1 more)",
+    "url": "https://openai.com/index/gpt-6-2-astra"
+  },
+  "app-items": [
+    {
+      "title": "Introducing GPT-6.2 Astra with autonomous computer use",
+      "headline": "OpenAI releases GPT-6.2 Astra with autonomous computer use",
+      "url": "https://openai.com/index/gpt-6-2-astra",
+      "source": "OpenAI",
+      "source_domain": "openai.com",
+      "collected_date": "2026-10-18T16:55:58.077Z",
+      "published": "Sun, 18 Oct 2026 13:55:57 GMT",
+      "published_at": "2026-10-18T13:55:57.000Z",
+      "captured_at": "2026-10-18T16:55:58.077Z",
+      "relevance": 92,
+      "signal_score": 100,
+      "category": "Model Release",
+      "urgent": true,
+      "urgency_tier": 1,
+      "tier_label": "BREAKING",
+      "primary_source": true,
+      "tier1": false,
+      "direction": "advance",
+      "domain": "Frontier Models & AGI",
+      "dimensions": [
+        "Frontier Models & AGI",
+        "AI Safety & Alignment"
+      ],
+      "geo": "US",
+      "horizon": "now",
+      "entities": [
+        "OpenAI",
+        "GPT-6.2 Astra"
+      ],
+      "impact": "New capability class.",
+      "who_cares": "Builders and security teams.",
+      "industry_line": "OpenAI shipped a new model that can operate a computer on its own.",
+      "consumer_line": "OpenAI shipped a new model that can operate a computer on its own.",
+      "story_key": "openai-releases-gpt-6-2-astra",
+      "update_type": "new",
+      "what_is_new": "",
+      "content_type": "verified_reporting"
+    },
+    {
+      "title": "Artificial Intelligence; Export Controls on Advanced Chips",
+      "headline": "BIS issues final rule on advanced chip export controls",
+      "url": "https://www.federalregister.gov/d/2026-1234",
+      "source": "Federal Register",
+      "source_domain": "federalregister.gov",
+      "collected_date": "2026-10-18T16:55:58.077Z",
+      "published": "2026-10-18",
+      "published_at": "2026-10-18T00:00:00.000Z",
+      "captured_at": "2026-10-18T16:55:58.077Z",
+      "relevance": 88,
+      "signal_score": 100,
+      "category": "Government Action",
+      "urgent": true,
+      "urgency_tier": 1,
+      "tier_label": "BREAKING",
+      "primary_source": true,
+      "tier1": false,
+      "direction": "threat",
+      "domain": "Policy & Regulation",
+      "dimensions": [
+        "Policy & Regulation",
+        "Compute & Chips"
+      ],
+      "geo": "US",
+      "horizon": "now",
+      "entities": [
+        "BIS"
+      ],
+      "impact": "Binding.",
+      "who_cares": "Chip makers.",
+      "industry_line": "The US tightened rules on selling advanced AI chips abroad.",
+      "consumer_line": "The US tightened rules on selling advanced AI chips abroad.",
+      "story_key": "bis-final-rule-chip-export-controls",
+      "update_type": "new",
+      "what_is_new": "",
+      "content_type": "verified_reporting"
+    }
+  ]
+}

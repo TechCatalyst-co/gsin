@@ -51,13 +51,16 @@ test('ingest: accepts RSS-style aliases (link, pubDate, description)', async () 
   assert.equal(doc.published.toISOString(), '2026-10-14T10:00:00.000Z');
 });
 
-test('relevance is not required and is ignored if sent', async () => {
+test('relevance is optional; when the radar sends it, it is kept as a 0-100 score', async () => {
   await request(app).post('/api/news').set(KEY)
     .send({ title: 'Legacy payload', url: 'https://example.com/legacy', relevance: 95 }).expect(200);
   const doc = await NewsItem.findOne({ url: 'https://example.com/legacy' }).lean();
-  assert.equal(doc.relevance, undefined);
-  const res = await request(app).get('/api/news/' + doc.slug).expect(200);
-  assert.equal(res.body.item.relevance, undefined);
+  assert.equal(doc.relevance, 95);
+  await request(app).post('/api/news').set(KEY)
+    .send({ title: 'No score', url: 'https://example.com/noscore' }).expect(200);
+  const plain = await NewsItem.findOne({ url: 'https://example.com/noscore' }).lean();
+  assert.equal(plain.relevance, undefined);
+  assert.equal(plain.urgencyTier, undefined);
 });
 
 test('partial re-ingest does not blank fields or reset curation', async () => {

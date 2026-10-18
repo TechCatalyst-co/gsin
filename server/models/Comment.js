@@ -10,6 +10,8 @@ const commentSchema = new mongoose.Schema(
     // 'staff' | 'member' — snapshotted badge for the author row.
     authorBadge: { type: String, enum: ['staff', 'member'], default: 'member' },
     body: { type: String, required: true, trim: true, maxlength: 2000 },
+    // Where it was posted from: web | ios | android (the clients send it).
+    platform: { type: String, enum: ['web', 'ios', 'android'], default: 'web' },
 
     // Soft delete keeps thread structure intact.
     status: { type: String, enum: ['visible', 'removed'], default: 'visible' },

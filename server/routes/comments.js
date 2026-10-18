@@ -4,8 +4,9 @@ const Comment = require('../models/Comment');
 const NewsItem = require('../models/NewsItem');
 const User = require('../models/User');
 const requireAuth = require('../middleware/auth');
+const apiKey = require('../middleware/apiKey');
 const optionalAuth = require('../middleware/optionalAuth');
-const { commentLimiter, readLimiter } = require('../middleware/rateLimit');
+const { commentLimiter, readLimiter, machineLimiter } = require('../middleware/rateLimit');
 const { cleanBody } = require('../utils/text');
 const { capabilitiesFor, requireCapability } = require('../utils/capabilities');
 
@@ -35,6 +36,7 @@ function serialize(comment, user) {
     authorBadge: redacted ? null : comment.authorBadge,
     body: redacted ? null : comment.body,
     status: comment.status,
+    platform: comment.platform || 'web',
     hidden,
     createdAt: comment.createdAt,
     isMine: !!user && user._id.equals(comment.author),
@@ -50,11 +52,45 @@ function rejectIfBanned(req, res) {
   return false;
 }
 
+// GET /api/comments/recent?hours=24 — n8n (x-api-key). Reader discussion from
+// the last N hours in the shape the Evening Daily Brief workflow consumes, so
+// the analyst can weigh what readers are saying. Removed comments are skipped.
+async function recentForMachines(req, res) {
+  try {
+    const hours = Math.min(24 * 14, Math.max(1, parseInt(req.query.hours, 10) || 24));
+    const since = new Date(Date.now() - hours * 3600 * 1000);
+    const rows = await Comment.find({ status: 'visible', createdAt: { $gte: since } })
+      .sort({ createdAt: -1 }).limit(500).lean();
+    const ids = [...new Set(rows.map((c) => String(c.newsItem)))];
+    const items = await NewsItem.find({ _id: { $in: ids } }).select('url title storyKey').lean();
+    const byId = new Map(items.map((n) => [String(n._id), n]));
+    res.json(rows.map((c) => {
+      const n = byId.get(String(c.newsItem));
+      return {
+        article_url: n ? n.url : null,
+        article_title: n ? n.title : null,
+        story_key: n ? n.storyKey : null,
+        comment_text: c.body,
+        platform: c.platform || 'web',
+        user_tier: c.authorBadge === 'staff' ? 'staff' : 'free',
+        created_at: c.createdAt,
+      };
+    }));
+  } catch (err) {
+    console.error('recent comments error:', err);
+    res.status(500).json({ error: 'Failed to fetch recent comments' });
+  }
+}
+router.get('/recent', machineLimiter, apiKey, recentForMachines);
+
 // GET /api/comments?newsItem=<id> — PUBLIC. Flat list; clients build the tree.
 // `canPost` is true for any signed-in, non-banned reader.
+// GET /api/comments?hours=24 with x-api-key is the same as /recent (the n8n
+// Evening workflow calls this form).
 router.get('/', readLimiter, optionalAuth, async (req, res) => {
   try {
     const { newsItem } = req.query;
+    if (!newsItem && req.query.hours) return apiKey(req, res, () => recentForMachines(req, res));
     if (!mongoose.isValidObjectId(newsItem)) return res.status(400).json({ error: 'Invalid story id' });
     const comments = await Comment.find({ newsItem }).sort({ createdAt: 1 }).limit(500).lean();
     const caps = capabilitiesFor(req.user);
@@ -91,6 +127,7 @@ router.post('/', requireAuth, requireCapability('participateInThreads'), comment
       parentId = parent;
     }
 
+    const platform = ['web', 'ios', 'android'].includes(req.body?.platform) ? req.body.platform : 'web';
     const comment = await Comment.create({
       newsItem,
       parent: parentId,
@@ -98,6 +135,7 @@ router.post('/', requireAuth, requireCapability('participateInThreads'), comment
       authorName: req.user.name || req.user.email.split('@')[0],
       authorBadge: badgeFor(req.user),
       body,
+      platform,
     });
     await NewsItem.updateOne({ _id: newsItem }, { $inc: { commentCount: 1 } });
     res.status(201).json({ comment: serialize(comment, req.user) });

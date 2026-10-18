@@ -1,0 +1,158 @@
+{
+  "brief_type": "evening",
+  "kind": "evening_brief",
+  "brand": "Global SI News",
+  "generated_at": "2026-10-18T16:55:58.112Z",
+  "briefing_date": "October 18, 2026",
+  "window_start": "Sat Oct 17, 9:55 AM",
+  "window_end": "Sun Oct 18, 9:55 AM",
+  "summary": "Two tier-1 actions today.",
+  "key_points": [
+    "T1",
+    "T2"
+  ],
+  "plain_summary": "New model, new rules.",
+  "critical_intelligence": [
+    {
+      "headline": "OpenAI ships Astra",
+      "why_it_matters": "Capability jump.",
+      "priority": "HIGH",
+      "domain": "Frontier Models & AGI",
+      "category": "Model Release",
+      "url": "https://openai.com/index/gpt-6-2-astra"
+    }
+  ],
+  "emerging_trends": [
+    {
+      "trend": "Capability + controls",
+      "evidence": "E1, E2",
+      "domain": "Policy"
+    }
+  ],
+  "cross_domain_insights": [
+    "Release and export rule land the same day."
+  ],
+  "forward_watchlist": [
+    {
+      "item": "EU reaction to BIS rule",
+      "window": "48h",
+      "why": "Comment period."
+    }
+  ],
+  "watchlist_followup": [
+    {
+      "predicted": "OpenAI expected to ship Astra update",
+      "status": "confirmed",
+      "evidence": "E1"
+    }
+  ],
+  "week_in_actions": [],
+  "industry_note": "EU reaction to BIS rule",
+  "consumer_note": "New model, new rules.",
+  "total": 5,
+  "raw_total": 5,
+  "event_count": 2,
+  "urgent_count": 2,
+  "breaking_count": 2,
+  "watch_count": 0,
+  "signal_count": 0,
+  "briefing_count": 0,
+  "logged_count": 0,
+  "positive_count": 1,
+  "threat_count": 1,
+  "tier1_count": 1,
+  "brand_count": 0,
+  "counsel_count": 0,
+  "confidence": 88,
+  "qa_note": "Sound.",
+  "rubric_version": "GSI-V1.0",
+  "push": {
+    "heading": "Global SI News \u2014 Evening Brief",
+    "body": "Today: 2 developments, 1 high-impact. New model, new rules."
+  },
+  "app_items": [
+    {
+      "headline": "OpenAI releases GPT-6.2 Astra",
+      "title": "OpenAI releases GPT-6.2 Astra",
+      "url": "https://openai.com/index/gpt-6-2-astra",
+      "source": "OpenAI, Reuters",
+      "published": "09:00",
+      "published_at": "2026-10-18T13:55:57.000Z",
+      "captured_at": "2026-10-18T16:55:58.077Z",
+      "impact": "OpenAI released it.",
+      "category": "Model Release",
+      "urgent": true,
+      "tier1": true,
+      "relevance": 97,
+      "signal_score": 97,
+      "urgency_tier": 1,
+      "tier_label": "BREAKING",
+      "primary_source": true,
+      "direction": "advance",
+      "domain": "Frontier Models & AGI",
+      "dimensions": [
+        "Frontier Models & AGI"
+      ],
+      "geo": "US",
+      "horizon": "now",
+      "entities": [
+        "OpenAI"
+      ],
+      "industry_line": "OpenAI shipped a new model that can operate a computer on its own.",
+      "consumer_line": "OpenAI shipped a new model that can operate a computer on its own.",
+      "complexity": 97,
+      "complexity_label": "advance",
+      "apa_resource": "",
+      "story_key": "openai-releases-gpt-6-2-astra",
+      "source_count": 2,
+      "content_type": "verified_reporting"
+    },
+    {
+      "headline": "BIS final rule on chip export controls",
+      "title": "BIS final rule on chip export controls",
+      "url": "https://www.federalregister.gov/d/2026-1234",
+      "source": "Federal Register",
+      "published": "09:05",
+      "published_at": "2026-10-18T00:00:00.000Z",
+      "captured_at": "2026-10-18T16:55:58.077Z",
+      "impact": "Binding rule.",
+      "category": "Government Action",
+      "urgent": true,
+      "tier1": false,
+      "relevance": 95,
+      "signal_score": 95,
+      "urgency_tier": 1,
+      "tier_label": "BREAKING",
+      "primary_source": true,
+      "direction": "threat",
+      "domain": "Policy & Regulation",
+      "dimensions": [
+        "Policy & Regulation"
+      ],
+      "geo": "US",
+      "horizon": "now",
+      "entities": [
+        "BIS"
+      ],
+      "industry_line": "The US tightened rules on selling advanced AI chips abroad.",
+      "consumer_line": "The US tightened rules on selling advanced AI chips abroad.",
+      "complexity": 95,
+      "complexity_label": "threat",
+      "apa_resource": "",
+      "story_key": "bis-final-rule-chip-export-controls",
+      "source_count": 1,
+      "content_type": "verified_reporting"
+    }
+  ],
+  "content_labels": {
+    "summary": "ai_analysis",
+    "critical_intelligence": "ai_analysis",
+    "emerging_trends": "ai_analysis",
+    "cross_domain_insights": "ai_analysis",
+    "key_points": "ai_analysis",
+    "forward_watchlist": "speculative_forecast",
+    "watchlist_followup": "ai_analysis",
+    "week_in_actions": "reporting",
+    "app_items": "reporting"
+  }
+}
