@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute';
 import Masthead from './components/Masthead';
@@ -8,7 +8,12 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import Topic, { Search } from './pages/Topic';
 import Story from './pages/Story';
-import DailyBrief from './pages/DailyBrief';
+import Intelligence from './pages/Intelligence';
+import Watchlist from './pages/Watchlist';
+import About from './pages/About';
+import RadarStrip from './components/RadarStrip';
+import BootScreen from './components/BootScreen';
+import { Research } from './pages/Topic';
 import Saved from './pages/Saved';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -28,15 +33,24 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <a className="skip" href="#main">Skip to content</a>
-        <SiteMasthead />
+        <BootScreen />
+        <RadarStrip />
+        <Masthead />
         <main id="main">
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/newsroom" element={<Home />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/welcome" element={<Landing />} />
+            <Route path="/newsroom" element={<Navigate to="/" replace />} />
             <Route path="/topic/:slug" element={<Topic />} />
+            <Route path="/research" element={<Research />} />
             <Route path="/story/:slug" element={<Story />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/brief" element={<DailyBrief />} />
+            <Route path="/intelligence" element={<Intelligence />} />
+            <Route path="/intelligence/:date" element={<Intelligence />} />
+            <Route path="/intelligence/:date/:type" element={<Intelligence />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/brief" element={<Navigate to="/intelligence" replace />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terms" element={<Terms />} />
@@ -52,7 +66,7 @@ export default function App() {
               <Route path="members" element={<AdminMembers />} />
             </Route>
             {/* Legacy paths */}
-            <Route path="/daily-brief" element={<Navigate to="/brief" replace />} />
+            <Route path="/daily-brief" element={<Navigate to="/intelligence" replace />} />
             <Route path="/pricing" element={<Navigate to="/" replace />} />
             <Route path="/premium" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -63,10 +77,4 @@ export default function App() {
       </AuthProvider>
     </BrowserRouter>
   );
-}
-
-// The landing page carries its own top bar; every other page gets the masthead.
-function SiteMasthead() {
-  const { pathname } = useLocation();
-  return pathname === '/' ? null : <Masthead />;
 }
