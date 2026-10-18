@@ -1,10 +1,16 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../brand.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
+
+// ---------------------------------------------------------------------------
+// Helpers
 
 String timeAgo(DateTime? d) {
   if (d == null) return '';
@@ -19,7 +25,19 @@ String timeAgo(DateTime? d) {
   return '${m[d.month - 1]} ${d.day}';
 }
 
-bool isSafeHttpUrl(String url) {
+/// Short form for chips: 12m, 3h, 2d.
+String ageShort(DateTime? d) {
+  if (d == null) return '—';
+  final mins = DateTime.now().difference(d).inMinutes;
+  if (mins < 1) return 'now';
+  if (mins < 60) return '${mins}m';
+  final hrs = mins ~/ 60;
+  if (hrs < 48) return '${hrs}h';
+  return '${hrs ~/ 24}d';
+}
+
+bool isSafeHttpUrl(String? url) {
+  if (url == null) return false;
   final uri = Uri.tryParse(url);
   return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
 }
@@ -29,75 +47,512 @@ Future<void> openExternal(String url) async {
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
 
-class CategoryLabel extends StatelessWidget {
-  const CategoryLabel({super.key, required this.name, this.tappable = true});
+/// Where a story opens: its grouped story page when the radar gave it a key,
+/// else the single item.
+void openStory(BuildContext context, NewsItem item) {
+  context.push('/story/${Uri.encodeComponent(item.ref)}', extra: item);
+}
 
-  final String? name;
-  final bool tappable;
+bool reduceMotion(BuildContext context) => MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+// ---------------------------------------------------------------------------
+// Brand
+
+/// The Global SI symbol (assets/brand/mark.png).
+class BrandMark extends StatelessWidget {
+  const BrandMark({super.key, this.size = 26});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) =>
+      Image.asset('assets/brand/mark.png', width: size, height: size, filterQuality: FilterQuality.medium);
+}
+
+/// Kept for older screens; the mark is the brand glyph now.
+class CurveGlyph extends StatelessWidget {
+  const CurveGlyph({super.key, this.size = 26});
+  final double size;
+  @override
+  Widget build(BuildContext context) => BrandMark(size: size);
+}
+
+/// The mark with the gold wordmark: "✦ GLOBAL SI NEWS".
+class Wordmark extends StatelessWidget {
+  const Wordmark({super.key, this.size = 13, this.full = true, this.showMark = true});
+  final double size;
+  final bool full;
+  final bool showMark;
 
   @override
   Widget build(BuildContext context) {
-    if (name == null || name!.isEmpty) return const SizedBox.shrink();
-    final meta = categoryMeta(name);
     final p = context.palette;
-    final row = Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: meta.hue, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(meta.name, style: display(size: 13, weight: FontWeight.w600, color: p.ink2)),
+        if (showMark) ...[BrandMark(size: size * 2), SizedBox(width: size * 0.7)],
+        Text(
+          full ? '✦  GLOBAL SI NEWS' : '✦  GSI',
+          style: display(size: size, weight: FontWeight.w700, color: p.gold, letterSpacing: size * 0.16, height: 1),
+        ),
       ],
-    );
-    if (!tappable) return row;
-    return InkWell(
-      onTap: () => context.push('/topic/${Uri.encodeComponent(meta.name)}'),
-      child: Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: row),
     );
   }
 }
 
+// ---------------------------------------------------------------------------
+// Chips
+
+/// A flat 4px-radius chip. `tier` colors it as T1/T2; `verified` is the
+/// primary-source seal; `gold` is for insight labels only.
+class GsiChip extends StatelessWidget {
+  const GsiChip(this.text, {super.key, this.tier, this.verified = false, this.gold = false, this.dot});
+  final String text;
+  final int? tier;
+  final bool verified;
+  final bool gold;
+  final Color? dot;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    Color bg = p.surface, fg = p.ink2, border = p.line;
+    if (tier == 1) {
+      bg = p.signal;
+      fg = p.signalInk;
+      border = p.signal;
+    } else if (tier == 2) {
+      bg = p.signalSoft;
+      fg = p.isDark ? p.link : p.signal;
+      border = p.signalSoft;
+    } else if (verified) {
+      bg = Colors.transparent;
+      fg = p.isDark ? p.link : p.signal;
+      border = p.signal.withValues(alpha: 0.6);
+    } else if (gold) {
+      bg = Colors.transparent;
+      fg = p.gold;
+      border = p.gold.withValues(alpha: 0.55);
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4), border: Border.all(color: border)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (dot != null) ...[
+          Container(width: 6, height: 6, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+          const SizedBox(width: 5),
+        ],
+        if (verified) ...[Icon(Icons.verified_outlined, size: 12, color: fg), const SizedBox(width: 4)],
+        Text(text, style: display(size: 11, weight: FontWeight.w600, color: fg, letterSpacing: 0.2, height: 1.1)),
+      ]),
+    );
+  }
+}
+
+class TierChip extends StatelessWidget {
+  const TierChip(this.tier, {super.key, this.long = false});
+  final int tier;
+  final bool long;
+  @override
+  Widget build(BuildContext context) =>
+      GsiChip(long ? 'T$tier ${tierName[tier] ?? ''}'.trim() : 'T$tier', tier: tier <= 2 ? tier : null);
+}
+
+class DomainChip extends StatelessWidget {
+  const DomainChip(this.name, {super.key, this.tappable = false});
+  final String? name;
+  final bool tappable;
+  @override
+  Widget build(BuildContext context) {
+    if (name == null || name!.isEmpty) return const SizedBox.shrink();
+    final meta = categoryMeta(name);
+    final chip = GsiChip(meta.short, dot: meta.hue);
+    if (!tappable) return chip;
+    return InkWell(onTap: () => context.push('/topic/${Uri.encodeComponent(meta.name)}'), child: chip);
+  }
+}
+
+/// Reporting vs analysis vs forecast, as the style guide requires.
+enum LabelKind { reporting, analysis, forecast }
+
+class LabelChip extends StatelessWidget {
+  const LabelChip(this.kind, {super.key});
+  final LabelKind kind;
+  @override
+  Widget build(BuildContext context) => switch (kind) {
+        LabelKind.reporting => const GsiChip('Verified reporting', verified: true),
+        LabelKind.analysis => const GsiChip('AI-generated analysis', gold: true),
+        LabelKind.forecast => const GsiChip('Speculative forecast'),
+      };
+}
+
+/// The chips every story carries: tier, desk, verified seal, kind, escalation.
+class ItemChips extends StatelessWidget {
+  const ItemChips({super.key, required this.item, this.tappableDomain = false});
+  final NewsItem item;
+  final bool tappableDomain;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(spacing: 6, runSpacing: 6, children: [
+      if (item.graded || item.urgent) TierChip(item.tier, long: item.tier == 1),
+      DomainChip(item.category, tappable: tappableDomain),
+      if (item.primarySource) const GsiChip('Verified source', verified: true),
+      if (item.kind != null && item.kind!.isNotEmpty) GsiChip(item.kind!),
+      if (item.updateType == 'escalation') const GsiChip('Escalation'),
+    ]);
+  }
+}
+
+/// Older screens use these two names.
+class CategoryLabel extends StatelessWidget {
+  const CategoryLabel({super.key, required this.name, this.tappable = true});
+  final String? name;
+  final bool tappable;
+  @override
+  Widget build(BuildContext context) => DomainChip(name, tappable: tappable);
+}
+
 class BreakingFlag extends StatelessWidget {
   const BreakingFlag({super.key});
+  @override
+  Widget build(BuildContext context) => const TierChip(1, long: true);
+}
+
+// ---------------------------------------------------------------------------
+// Instruments
+
+/// Signal score as a thin segmented meter with the number.
+class SignalMeter extends StatelessWidget {
+  const SignalMeter({super.key, required this.score, this.tier = 3, this.width = 64});
+  final int score;
+  final int tier;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final color = tier == 1 ? p.signal : (tier == 2 ? p.link : p.slate);
+    final filled = (score / 20).ceil().clamp(0, 5).toInt();
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      for (var i = 0; i < 5; i++)
+        Container(
+          width: (width - 8) / 5,
+          height: 6,
+          margin: EdgeInsets.only(right: i == 4 ? 0 : 2),
+          decoration: BoxDecoration(color: i < filled ? color : p.line, borderRadius: BorderRadius.circular(1)),
+        ),
+      const SizedBox(width: 6),
+      Text('$score', style: figures(size: 12, color: p.ink2, weight: FontWeight.w600)),
+    ]);
+  }
+}
+
+/// Signal score as an arc gauge.
+class SignalGauge extends StatelessWidget {
+  const SignalGauge({super.key, required this.score, this.size = 46});
+  final int score;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _ArcPainter(value: score / 100, track: p.line, fill: p.signal, stroke: size * 0.09, sweep: 1.5 * math.pi),
+        child: Center(child: Text('$score', style: figures(size: size * 0.34, color: p.ink, weight: FontWeight.w600))),
+      ),
+    );
+  }
+}
+
+/// The QA stage's confidence, 0–100, as a ring.
+class ConfidenceRing extends StatelessWidget {
+  const ConfidenceRing({super.key, required this.value, this.size = 64});
+  final int value;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _ArcPainter(value: value / 100, track: p.line, fill: p.signal, stroke: size * 0.08, sweep: 2 * math.pi),
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('$value', style: figures(size: size * 0.3, color: p.ink, weight: FontWeight.w700, height: 1)),
+            Text('QA', style: display(size: size * 0.14, weight: FontWeight.w600, color: p.slate, letterSpacing: 1)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArcPainter extends CustomPainter {
+  _ArcPainter({required this.value, required this.track, required this.fill, required this.stroke, required this.sweep});
+  final double value;
+  final Color track;
+  final Color fill;
+  final double stroke;
+  final double sweep;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, size.width - stroke, size.height - stroke);
+    final start = sweep >= 2 * math.pi ? -math.pi / 2 : math.pi / 2 + (2 * math.pi - sweep) / 2;
+    final base = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.butt;
+    canvas.drawArc(rect, start, sweep, false, base..color = track);
+    canvas.drawArc(rect, start, sweep * value.clamp(0.0, 1.0).toDouble(), false, base..color = fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArcPainter old) =>
+      old.value != value || old.track != track || old.fill != fill || old.stroke != stroke;
+}
+
+/// One reading on an instrument strip: a value with a small label under it.
+class Reading extends StatelessWidget {
+  const Reading({super.key, required this.label, this.value, this.child});
+  final String label;
+  final String? value;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Expanded(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          height: 46,
+          child: Center(child: child ?? Text(value ?? '—', style: display(size: 22, weight: FontWeight.w700, color: p.ink, height: 1))),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: display(size: 10, weight: FontWeight.w600, color: p.slate, letterSpacing: 0.6)),
+      ]),
+    );
+  }
+}
+
+/// Gauge / fresh / sources / verified, framed.
+class InstrumentStrip extends StatelessWidget {
+  const InstrumentStrip({super.key, required this.item});
+  final NewsItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final verified = item.primarySource;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.line),
+      ),
+      child: Row(children: [
+        Reading(label: 'SIGNAL', child: SignalGauge(score: item.signalScore ?? 0)),
+        _divider(p),
+        Reading(label: 'FRESH', value: item.freshLabel),
+        _divider(p),
+        Reading(label: 'SOURCES', value: '${math.max(1, item.sourceCount ?? 1)}'),
+        _divider(p),
+        Reading(
+          label: verified ? 'VERIFIED' : 'REPORTED',
+          child: Icon(verified ? Icons.verified_outlined : Icons.description_outlined, size: 24, color: verified ? p.signal : p.slate),
+        ),
+      ]),
+    );
+  }
+
+  Widget _divider(AppPalette p) => Container(width: 1, height: 40, color: p.line);
+}
+
+// ---------------------------------------------------------------------------
+// Sections, states
+
+class SectionHeader extends StatelessWidget {
+  const SectionHeader(this.title, {super.key, this.caption, this.trailing, this.padding = const EdgeInsets.fromLTRB(16, 18, 16, 8)});
+  final String title;
+  final String? caption;
+  final Widget? trailing;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: padding,
+      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Text(title, style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
+        if (caption != null) ...[
+          const SizedBox(width: 8),
+          Expanded(child: Text(caption!, style: reading(size: 12, color: p.slate, height: 1.3), overflow: TextOverflow.ellipsis)),
+        ] else
+          const Spacer(),
+        if (trailing != null) trailing!,
+      ]),
+    );
+  }
+}
+
+/// Older screens use this name.
+class SectionLabel extends StatelessWidget {
+  const SectionLabel(this.text, {super.key, this.padding = const EdgeInsets.fromLTRB(16, 18, 16, 8)});
+  final String text;
+  final EdgeInsets padding;
+  @override
+  Widget build(BuildContext context) => SectionHeader(text, padding: padding);
+}
+
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key, required this.title, required this.body, this.action});
+  final String title;
+  final String body;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const MiniRadar(size: 40),
+          const SizedBox(height: 14),
+          Text(title, style: display(size: 20, weight: FontWeight.w700, color: p.ink, height: 1.2)),
+          const SizedBox(height: 8),
+          Text(body, style: reading(size: 15, color: p.ink2)),
+          if (action != null) ...[const SizedBox(height: 16), action!],
+        ],
+      ),
+    );
+  }
+}
+
+class ErrorBlock extends StatelessWidget {
+  const ErrorBlock({super.key, required this.text, this.onRetry});
+  final String text;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-      decoration: BoxDecoration(color: p.flare, borderRadius: BorderRadius.circular(4)),
-      child: Text('Breaking', style: display(size: 11.5, weight: FontWeight.w700, color: Colors.white)),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: p.lineStrong)),
+      child: Row(children: [
+        Icon(Icons.wifi_tethering_error, color: p.flare, size: 20),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text, style: reading(size: 14, color: p.ink))),
+        if (onRetry != null) TextButton(onPressed: onRetry, child: const Text('Try again')),
+      ]),
     );
   }
 }
 
-class StoryMeta extends StatelessWidget {
-  const StoryMeta({super.key, required this.item, this.showCategory = true});
+/// Loading state: the small radar sweeping.
+class RadarLoading extends StatelessWidget {
+  const RadarLoading({super.key, this.text = 'Sweeping the radar…'});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const MiniRadar(size: 56),
+        const SizedBox(height: 14),
+        Text(text, style: reading(size: 13, color: p.slate)),
+      ]),
+    );
+  }
+}
 
-  final NewsItem item;
-  final bool showCategory;
+/// A small radar: two rings and a sweeping hand. Static when motion is reduced.
+class MiniRadar extends StatefulWidget {
+  const MiniRadar({super.key, this.size = 56, this.period = const Duration(milliseconds: 2400)});
+  final double size;
+  final Duration period;
+
+  @override
+  State<MiniRadar> createState() => _MiniRadarState();
+}
+
+class _MiniRadarState extends State<MiniRadar> with SingleTickerProviderStateMixin {
+  late final Ticker _ticker;
+  double _t = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker((elapsed) {
+      setState(() => _t = (elapsed.inMilliseconds % widget.period.inMilliseconds) / widget.period.inMilliseconds);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final still = reduceMotion(context);
+    if (still && _ticker.isActive) _ticker.stop();
+    if (!still && !_ticker.isActive) _ticker.start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final small = display(size: 13, weight: FontWeight.w400, color: p.slate);
-    return Wrap(
-      spacing: 12,
-      runSpacing: 2,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        if (showCategory) CategoryLabel(name: item.category),
-        Text(item.source, style: small.copyWith(color: p.ink2, fontWeight: FontWeight.w500)),
-        Text(timeAgo(item.published), style: small),
-        if (item.commentCount > 0)
-          Text('${item.commentCount} comment${item.commentCount == 1 ? '' : 's'}', style: small),
-      ],
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: CustomPaint(painter: _MiniRadarPainter(angle: _t * 2 * math.pi - math.pi / 2, blue: p.signal)),
     );
   }
 }
 
-class StoryImage extends StatelessWidget {
-  const StoryImage({super.key, required this.url, this.aspect = 16 / 9, this.radius = 12});
+class _MiniRadarPainter extends CustomPainter {
+  _MiniRadarPainter({required this.angle, required this.blue});
+  final double angle;
+  final Color blue;
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2 - 1;
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawCircle(c, r, ring..color = blue.withValues(alpha: 0.5));
+    canvas.drawCircle(c, r * 0.5, ring..color = blue.withValues(alpha: 0.3));
+    canvas.drawLine(c, c + Offset(math.cos(angle), math.sin(angle)) * r, Paint()
+      ..color = blue
+      ..strokeWidth = 1.5);
+    canvas.drawCircle(c, 2, Paint()..color = blue);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniRadarPainter old) => old.angle != angle || old.blue != blue;
+}
+
+// ---------------------------------------------------------------------------
+// Stories
+
+class StoryImage extends StatelessWidget {
+  const StoryImage({super.key, required this.url, this.aspect = 16 / 9, this.radius = 10});
   final String? url;
   final double aspect;
   final double radius;
@@ -120,43 +575,109 @@ class StoryImage extends StatelessWidget {
   }
 }
 
-/// The lead story: biggest type on the screen.
+/// Source, age, kind, corroboration, comments, and the signal meter.
+class StoryMeta extends StatelessWidget {
+  const StoryMeta({super.key, required this.item, this.showCategory = false, this.showSignal = true});
+  final NewsItem item;
+  final bool showCategory;
+  final bool showSignal;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final small = reading(size: 12.5, color: p.slate, height: 1.3);
+    return Row(children: [
+      Expanded(
+        child: Wrap(spacing: 10, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          if (showCategory && item.category != null) Text(domainShort(item.category), style: small.copyWith(color: p.ink2)),
+          Text(item.source, style: small.copyWith(color: p.ink2, fontWeight: FontWeight.w500)),
+          Text(timeAgo(item.published), style: small),
+          if ((item.sourceCount ?? 1) > 1) Text('${item.sourceCount} sources', style: small),
+          if (item.commentCount > 0) Text('${item.commentCount} comment${item.commentCount == 1 ? '' : 's'}', style: small),
+        ]),
+      ),
+      if (showSignal && item.signalScore != null) ...[
+        const SizedBox(width: 8),
+        SignalMeter(score: item.signalScore!, tier: item.tier),
+      ],
+    ]);
+  }
+}
+
+/// The lead story as an instrument panel: chips, the biggest type on the screen,
+/// impact, plain English, the four readings, and the two actions.
 class LeadStory extends StatelessWidget {
   const LeadStory({super.key, required this.item});
-
   final NewsItem item;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return InkWell(
-      onTap: () => context.push('/story/${item.ref}', extra: item),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            StoryImage(url: item.imageUrl),
-            if (item.imageUrl != null) const SizedBox(height: 16),
-            if (item.urgent) ...[const BreakingFlag(), const SizedBox(height: 12)],
-            Text(item.title, style: display(size: 30, weight: FontWeight.w800, color: p.ink, height: 1.05)),
-            if (item.dek != null) ...[
-              const SizedBox(height: 10),
-              Text(item.dek!, style: reading(size: 18, color: p.ink2, height: 1.4)),
-            ],
-            const SizedBox(height: 12),
-            StoryMeta(item: item),
-          ],
+    final dek = item.impact ?? item.headline ?? item.summary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ItemChips(item: item),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: () => openStory(context, item),
+          child: Text(item.title, style: display(size: 27, weight: FontWeight.w700, color: p.ink, height: 1.12, letterSpacing: -0.4)),
         ),
-      ),
+        if (dek != null && dek.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(dek, style: reading(size: 15.5, color: p.ink2, height: 1.45)),
+        ],
+        if (item.industryLine != null && item.industryLine!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          PlainEnglish(text: item.industryLine!),
+        ],
+        if (item.graded) ...[const SizedBox(height: 14), InstrumentStrip(item: item)],
+        const SizedBox(height: 10),
+        StoryMeta(item: item, showSignal: false),
+        const SizedBox(height: 12),
+        Row(children: [
+          FilledButton(onPressed: () => openStory(context, item), child: const Text('Open the story')),
+          const SizedBox(width: 8),
+          if (isSafeHttpUrl(item.url))
+            Flexible(
+              child: OutlinedButton.icon(
+                onPressed: () => openExternal(item.url),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('Original source', overflow: TextOverflow.ellipsis),
+              ),
+            ),
+        ]),
+      ]),
     );
   }
 }
 
-/// Standard list row: text on the left, thumbnail on the right.
+/// "In plain English": the industry line, gold-labelled.
+class PlainEnglish extends StatelessWidget {
+  const PlainEnglish({super.key, required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: p.gold, width: 2)),
+        color: p.paperDeep,
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('✦  IN PLAIN ENGLISH', style: display(size: 10, weight: FontWeight.w700, color: p.gold, letterSpacing: 1.2)),
+        const SizedBox(height: 5),
+        Text(text, style: reading(size: 14.5, color: p.ink, height: 1.45)),
+      ]),
+    );
+  }
+}
+
+/// Standard list row: tier rail on the left, chips, headline, dek, meta with
+/// the signal meter. Thumbnail on the right when there is one.
 class StoryTile extends StatelessWidget {
   const StoryTile({super.key, required this.item, this.showCategory = true, this.compact = false});
-
   final NewsItem item;
   final bool showCategory;
   final bool compact;
@@ -164,148 +685,79 @@ class StoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final hasThumb = !compact && item.imageUrl != null && isSafeHttpUrl(item.imageUrl!);
+    final hasThumb = !compact && isSafeHttpUrl(item.imageUrl);
+    final rail = item.tier <= 2 ? p.tierColor(item.tier) : (item.tier == 3 ? p.lineStrong : p.line);
     return InkWell(
-      onTap: () => context.push('/story/${item.ref}', extra: item),
+      onTap: () => openStory(context, item),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (item.urgent) const Padding(padding: EdgeInsets.only(bottom: 4), child: BreakingFlag()),
-                  Text(item.title, style: display(size: compact ? 16 : 18, weight: FontWeight.w700, color: p.ink, height: 1.2)),
-                  if (!compact && item.dek != null) ...[
-                    const SizedBox(height: 4),
-                    Text(item.dek!, maxLines: 3, overflow: TextOverflow.ellipsis, style: reading(size: 15.5, color: p.ink2, height: 1.4)),
-                  ],
-                  const SizedBox(height: 8),
-                  StoryMeta(item: item, showCategory: showCategory),
-                ],
-              ),
-            ),
-            if (hasThumb) ...[
-              const SizedBox(width: 12),
-              SizedBox(width: 92, child: StoryImage(url: item.imageUrl, aspect: 1, radius: 8)),
-            ],
-          ],
+        padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: p.line), left: BorderSide(color: rail, width: 3)),
         ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (!compact) ...[
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  if (item.graded || item.urgent) TierChip(item.tier),
+                  if (showCategory) DomainChip(item.category),
+                  if (item.primarySource) const GsiChip('Verified', verified: true),
+                ]),
+                const SizedBox(height: 8),
+              ],
+              Text(item.title,
+                  style: display(size: compact ? 15 : 16.5, weight: FontWeight.w600, color: p.ink, height: 1.22)),
+              if (!compact && item.dek != null) ...[
+                const SizedBox(height: 5),
+                Text(item.dek!, maxLines: 2, overflow: TextOverflow.ellipsis, style: reading(size: 14, color: p.ink2, height: 1.4)),
+              ],
+              const SizedBox(height: 8),
+              StoryMeta(item: item, showSignal: !compact),
+            ]),
+          ),
+          if (hasThumb) ...[
+            const SizedBox(width: 12),
+            SizedBox(width: 84, child: StoryImage(url: item.imageUrl, aspect: 1, radius: 6)),
+          ],
+        ]),
       ),
     );
   }
 }
 
-class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key, this.padding = const EdgeInsets.fromLTRB(16, 20, 16, 4)});
-
-  final String text;
+/// A horizontal chip row that filters by desk.
+class FilterPills extends StatelessWidget {
+  const FilterPills({super.key, required this.selected, required this.onChanged, this.padding = const EdgeInsets.fromLTRB(16, 4, 16, 10)});
+  final String? selected;
+  final ValueChanged<String?> onChanged;
   final EdgeInsets padding;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: padding,
-        child: Text(text, style: display(size: 14, weight: FontWeight.w700, color: context.palette.slate)),
-      );
-}
-
-class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.title, required this.body, this.action});
-
-  final String title;
-  final String body;
-  final Widget? action;
-
-  @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: display(size: 24, weight: FontWeight.w800, color: p.ink)),
-          const SizedBox(height: 8),
-          Text(body, style: reading(size: 17, color: p.ink2)),
-          if (action != null) ...[const SizedBox(height: 16), action!],
-        ],
-      ),
-    );
-  }
-}
-
-/// The exponential-curve brand glyph.
-class CurveGlyph extends StatelessWidget {
-  const CurveGlyph({super.key, this.size = 26});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _CurvePainter(context.palette));
-}
-
-class _CurvePainter extends CustomPainter {
-  _CurvePainter(this.p);
-  final AppPalette p;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width / 32;
-    final axis = Paint()
-      ..color = p.lineStrong
-      ..strokeWidth = 2 * s
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(4 * s, 28 * s), Offset(28 * s, 28 * s), axis);
-    final curve = Paint()
-      ..color = p.signal
-      ..strokeWidth = 3 * s
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final path = Path()
-      ..moveTo(4 * s, 27 * s)
-      ..cubicTo(14 * s, 27 * s, 20 * s, 25 * s, 24 * s, 16 * s)
-      ..cubicTo(26 * s, 11 * s, 27 * s, 7 * s, 27.5 * s, 3 * s);
-    canvas.drawPath(path, curve);
-    canvas.drawCircle(Offset(27.5 * s, 3.5 * s), 2.4 * s, Paint()..color = p.flare);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CurvePainter old) => old.p != p;
-}
-
-/// "GSIN" set heavy, with the full name beside it as a two-line lockup.
-class Wordmark extends StatelessWidget {
-  const Wordmark({super.key, this.size = 22, this.full = true});
-  final double size;
-  final bool full;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CurveGlyph(size: size * 1.1),
-        const SizedBox(width: 8),
-        Text(Brand.short, style: display(size: size, weight: FontWeight.w800, color: p.ink, height: 1)),
-        if (full) ...[
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.only(left: 8),
-            decoration: BoxDecoration(border: Border(left: BorderSide(color: p.signal, width: 2))),
-            child: Text(
-              // Two balanced lines: "Global Super" / "Intelligence News"
-              '${Brand.name.split(' ').take(2).join(' ')}\n${Brand.name.split(' ').skip(2).join(' ')}',
-              maxLines: 2,
-              style: display(size: size * 0.42, weight: FontWeight.w600, color: p.ink2, height: 1.15),
+    Widget pill(String text, bool on, VoidCallback tap) => Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: InkWell(
+            onTap: tap,
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: on ? p.signal : p.surface,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: on ? p.signal : p.line),
+              ),
+              child: Text(text, style: display(size: 12, weight: FontWeight.w600, color: on ? p.signalInk : p.ink2)),
             ),
           ),
-        ],
-      ],
+        );
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: padding,
+      child: Row(children: [
+        pill('All', selected == null, () => onChanged(null)),
+        for (final c in categories) pill(c.short, selected == c.name, () => onChanged(c.name)),
+      ]),
     );
   }
 }
-

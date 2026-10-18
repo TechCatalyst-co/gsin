@@ -23,4 +23,19 @@ void main() {
     expect(push.available, isFalse);
     expect(push.enabled, isFalse);
   });
+
+  test('PushAlert reads a brief payload and routes to the edition', () {
+    final alert = PushAlert.fromMessage(const RemoteMessage(
+      data: {'type': 'brief', 'date': '2026-10-18', 'briefType': 'evening'},
+      notification: RemoteNotification(title: 'Evening Daily Brief is out'),
+    ));
+    expect(alert?.isBrief, isTrue);
+    expect(alert?.route, '/intelligence/2026-10-18/evening');
+    expect(PushAlert.fromMessage(const RemoteMessage(data: {'type': 'brief'})), isNull);
+  });
+
+  test('Breaking alerts route to the story', () {
+    final alert = PushAlert.fromMessage(const RemoteMessage(data: {'type': 'breaking', 'slug': 'a-b'}));
+    expect(alert?.route, '/story/a-b');
+  });
 }

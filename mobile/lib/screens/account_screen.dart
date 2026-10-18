@@ -46,27 +46,53 @@ class AccountScreen extends StatelessWidget {
     final user = auth.user;
 
     final push = context.watch<PushService>();
+    final theme = context.watch<ThemeController>();
     final alerts = [
-      if (push.available)
+      const SectionLabel('Alerts and appearance'),
+      if (push.available) ...[
         SwitchListTile(
           title: const Text('Breaking news alerts'),
           subtitle: Text(push.blocked
-              ? 'Notifications are off for ${Brand.short} in your phone settings'
-              : 'A notification when a major story breaks'),
+              ? 'Notifications are off for ${Brand.name} in your phone settings'
+              : 'One notification when a Tier 1 story breaks, never more than three in a burst'),
           value: push.enabled,
           onChanged: (v) => push.setEnabled(v),
         ),
+        SwitchListTile(
+          title: const Text('Brief alerts'),
+          subtitle: const Text('Morning Briefing at 6:50 AM PT and the Evening Daily Brief at 5:25 PM PT'),
+          value: push.briefEnabled,
+          onChanged: (v) => push.setBriefEnabled(v),
+        ),
+      ] else
+        ListTile(
+          title: const Text('Push alerts'),
+          subtitle: const Text('Not configured on this build. Breaking stories and both briefs still appear in the app.'),
+          leading: Icon(Icons.notifications_off_outlined, color: p.slate),
+        ),
+      SwitchListTile(
+        title: const Text('Dark control room'),
+        subtitle: Text(theme.isDark ? 'Midnight Navy, the default' : 'Pearl White'),
+        value: theme.isDark,
+        onChanged: (v) => theme.setMode(v ? ThemeMode.dark : ThemeMode.light),
+      ),
+      ListTile(
+        title: const Text('Saved stories'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push('/saved'),
+      ),
     ];
 
     final footer = [
       const SizedBox(height: 24),
       ListTile(title: const Text('Privacy'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => openExternal('$webBaseUrl/privacy')),
       ListTile(title: const Text('Terms'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => openExternal('$webBaseUrl/terms')),
+      ListTile(title: const Text('How stories are graded'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => openExternal('$webBaseUrl/about')),
       Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          '${Brand.short} is free and supported by advertising. Stories are gathered from public sources, summarized by an automated newsroom, and curated by editors.',
-          style: TextStyle(color: p.slate, fontSize: 13),
+          '${Brand.name} is free to read. The radar sweeps ${Brand.sourceCount} primary sources every 30 minutes and grades every story against a strict rubric; analysis and forecasts are labelled as such. $appVersionLabel.',
+          style: reading(size: 12.5, color: p.slate, height: 1.4),
         ),
       ),
     ];
@@ -75,7 +101,7 @@ class AccountScreen extends StatelessWidget {
       return ListView(children: [
         EmptyState(
           title: 'Everything is free to read',
-          body: 'Create a free account to join discussions, save stories, follow topics, and get the Daily Brief by email.',
+          body: 'Create a free account to join discussions, save stories, follow desks, and get the Morning Briefing by email.',
           action: Wrap(spacing: 10, runSpacing: 8, children: [
             FilledButton(onPressed: () => context.push('/register'), child: const Text('Create free account')),
             OutlinedButton(onPressed: () => context.push('/login'), child: const Text('Sign in')),
@@ -100,20 +126,20 @@ class AccountScreen extends StatelessWidget {
           if (user.isStaff)
             ListTile(title: const Text('Role'), trailing: Text(user.role == 'admin' ? 'Admin' : 'Editor', style: TextStyle(color: p.ink2))),
           SwitchListTile(
-            title: const Text('Daily Brief email'),
-            subtitle: const Text('Send me the brief each morning'),
+            title: const Text('Morning Briefing by email'),
+            subtitle: const Text('The consolidated brief in your inbox each morning'),
             value: user.briefEmails,
             onChanged: (v) => _setBriefEmails(context, v),
           ),
           ...alerts,
-          const SectionLabel('Topics you follow'),
+          const SectionLabel('Desks you follow'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Wrap(spacing: 8, runSpacing: 8, children: [
               for (final c in categories)
                 FilterChip(
                   avatar: Container(width: 10, height: 10, decoration: BoxDecoration(color: c.hue, shape: BoxShape.circle)),
-                  label: Text(c.name),
+                  label: Text(c.short),
                   showCheckmark: false,
                   selected: user.followedCategories.contains(c.name),
                   onSelected: (_) => _toggleTopic(context, c.name),

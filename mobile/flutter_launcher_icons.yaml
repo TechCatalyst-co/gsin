@@ -1,11 +1,11 @@
 # Launcher icon config — regenerate with: dart run flutter_launcher_icons
-# Source artwork: the exponential-curve mark (generated; replace with final art).
+# Source artwork: the Global SI News symbol (Global_SI_News_Symbol / App_Icon, Midnight Navy field).
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/icon/android_icon.png
   image_path_ios: assets/icon/ios_icon.png
-  # iOS icons must be opaque; ios_icon.png has a solid indigo background.
+  # iOS icons must be opaque; ios_icon.png has the solid Midnight Navy background.
   remove_alpha_ios: true
-  adaptive_icon_background: "#10153A"
+  adaptive_icon_background: "#0B1F3B"
   adaptive_icon_foreground: assets/icon/android_foreground.png
