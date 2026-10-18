@@ -32,7 +32,7 @@ Base URLs: local `http://localhost:4000`, production `https://<your-render-servi
 
 Upserts by `url`. Re-sending the same URL updates it, so every run can resend everything it saw. Only fields you send are written; a partial update (for example `{ "title", "url", "urgent": true }` to flag a story as breaking) never blanks other fields. Editor curation (picks, hidden) and comment counts are never touched by ingest.
 
-Body: one object or an array.
+Body: one object, an array, or the Global SI Radar's envelope `{ kind: 'radar_breaking', push: {…}, 'app-items': [ …items ] }` (also `app_items` / `items`). Only the items are stored; the envelope's email and push fields belong to n8n.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |

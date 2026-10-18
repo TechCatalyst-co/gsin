@@ -22,10 +22,22 @@ function serialize(item, caps) {
   return out;
 }
 
+// The body is one item, an array of items, or the Global SI Radar's envelope
+// ({ kind: 'radar_breaking', push, 'app-items': [...] }). Only the items are
+// stored; the envelope's email/push fields are n8n's own.
+function unwrapItems(body) {
+  if (Array.isArray(body)) return body;
+  if (!body || typeof body !== 'object') return [];
+  for (const key of ['app-items', 'app_items', 'items']) {
+    if (Array.isArray(body[key])) return body[key];
+  }
+  return [body];
+}
+
 // POST /api/news — n8n pushes items here (upsert by url). Key-protected.
 router.post('/', machineLimiter, apiKey, async (req, res) => {
   try {
-    const raw = Array.isArray(req.body) ? req.body : [req.body];
+    const raw = unwrapItems(req.body);
     if (!raw.length || (raw.length === 1 && (!raw[0] || !Object.keys(raw[0]).length))) {
       return res.status(400).json({ error: 'Empty payload' });
     }

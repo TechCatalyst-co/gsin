@@ -24,8 +24,12 @@ test.before(async () => {
 test.after(stopDb);
 
 test('breaking payload: T1 items land as urgent with their grading', async () => {
-  const res = await request(app).post('/api/news').set(KEY).send(breaking['app-items']).expect(200);
+  // The Radar posts its whole envelope; the server stores only the items.
+  const res = await request(app).post('/api/news').set(KEY).send(breaking).expect(200);
   assert.equal(res.body.received, breaking['app-items'].length);
+  // A bare array works too.
+  const again = await request(app).post('/api/news').set(KEY).send(breaking['app-items']).expect(200);
+  assert.equal(again.body.received, breaking['app-items'].length);
   const first = breaking['app-items'][0];
   const doc = await NewsItem.findOne({ url: first.url }).lean();
   assert.equal(doc.urgent, true);
