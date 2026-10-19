@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../brand.dart';
 import '../theme/app_theme.dart';
-import '../widgets/common.dart';
 import '../widgets/feed_list.dart';
 
 const _sorts = [('signal', 'Strongest'), ('latest', 'Latest'), ('discussed', 'Most discussed')];

@@ -116,7 +116,7 @@ class _SignalScreenState extends State<SignalScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _briefs.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (context, i) => _BriefCard(brief: _briefs[i]),
                 ),
               ),
@@ -175,7 +175,7 @@ class _Lanes extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           itemCount: lanes.length > 10 ? 10 : lanes.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (context, i) {
             final e = lanes[i];
             final meta = categoryMeta(e.key);
