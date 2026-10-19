@@ -396,7 +396,7 @@ class SectionHeader extends StatelessWidget {
           Expanded(child: Text(caption!, style: reading(size: 12, color: p.slate, height: 1.3), overflow: TextOverflow.ellipsis)),
         ] else
           const Spacer(),
-        if (trailing != null) trailing!,
+        ?trailing,
       ]),
     );
   }
@@ -568,7 +568,7 @@ class StoryImage extends StatelessWidget {
         child: Image.network(
           u,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => ColoredBox(color: context.palette.line),
+          errorBuilder: (_, _, _) => ColoredBox(color: context.palette.line),
         ),
       ),
     );
