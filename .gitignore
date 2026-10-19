@@ -56,3 +56,5 @@ upload.keystore.jks
 key.properties
 server/.env.staging
 /.impeccable
+/.run
+/.vscode
