@@ -51,7 +51,7 @@ class AuthScaffold extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Wordmark(size: 18),
+                      const Wordmark(size: 13),
                       const SizedBox(height: 20),
                       Text(title, style: display(size: 26, weight: FontWeight.w800, color: p.ink)),
                       const SizedBox(height: 4),

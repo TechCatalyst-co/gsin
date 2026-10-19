@@ -35,6 +35,22 @@ const brief = require('../../samples/daily-brief-sample.json');
     { upsert: true }
   );
   console.log(`daily brief: ${brief.briefing_date}`);
+
+  // Global SI: a graded breaking batch plus a morning and an evening edition,
+  // pushed through the same code path n8n hits.
+  const express = require('express');
+  const request = require('supertest');
+  process.env.API_KEY = process.env.API_KEY || 'seed';
+  const app = express(); app.use(express.json({ limit: '2mb' })); app.use('/api', require('../routes/api'));
+  const key = { 'x-api-key': process.env.API_KEY };
+  for (const [path, body] of [
+    ['/api/news', require('../../samples/globalsi-breaking.json')['app-items']],
+    ['/api/daily-brief', require('../../samples/globalsi-morning-brief.json')],
+    ['/api/daily-brief', require('../../samples/globalsi-evening-brief.json')],
+  ]) {
+    const r = await request(app).post(path).set(key).send(body);
+    console.log(`${path}: ${r.status} ${JSON.stringify(r.body).slice(0, 120)}`);
+  }
   await mongoose.disconnect();
 })().catch((err) => {
   console.error(err);

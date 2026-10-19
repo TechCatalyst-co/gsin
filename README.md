@@ -82,10 +82,12 @@ Point your workflow's HTTP Request node at `POST {API}/api/news` with header `x-
 | Endpoint | Who | Purpose |
 | --- | --- | --- |
 | `POST /api/news` | n8n (`x-api-key`) | Push stories (upsert by URL) |
-| `POST /api/daily-brief` | n8n (`x-api-key`) | Push the morning brief |
+| `POST /api/daily-brief` | n8n (`x-api-key`) | Push the morning and evening briefs (`brief_type`) |
+| `GET /api/comments?hours=24` | n8n (`x-api-key`) | Reader discussion for the evening analyst |
 | `GET /api/subscribers` | n8n (`x-api-key`) | Accounts that want the brief email |
-| `GET /api/news`, `/api/news/front-page`, `/api/news/:slug` | Anyone | Feed, front page, story |
-| `GET /api/daily-brief/latest`, `/dates`, `/:date` | Anyone | The brief and its archive |
+| `GET /api/news`, `/api/news/front-page`, `/api/news/:slug` | Anyone | Feed (tier, domain, horizon, signal sort), front page, story |
+| `GET /api/news/status`, `/api/news/story/:storyKey` | Anyone | Radar status strip; every capture of one story |
+| `GET /api/daily-brief/latest?type=`, `/list`, `/dates`, `/:date/:type` | Anyone | Both editions and the archive |
 | `GET /api/comments?newsItem=` / `POST /api/comments` | Anyone / signed in | Read / post discussion |
 | `/api/me/*` | Signed in | Saved stories, followed topics, brief-email preference |
 | `/api/admin/*` | Editors, admins | Curation, moderation, metrics, members |
@@ -104,6 +106,8 @@ API (`server/.env`):
 | `BRAND_NAME`, `BRAND_SHORT`, `BRAND_TAGLINE` | Used in RSS (defaults: Global Super Intelligence News / GSIN) |
 | `FIREBASE_SERVICE_ACCOUNT` | Optional. Firebase service-account JSON (raw or base64) to send breaking-news push alerts; empty = off |
 | `PUSH_TOPIC` | FCM topic for alerts (default `breaking`); the app's `--dart-define=PUSH_TOPIC` must match |
+| `PUSH_BRIEF_TOPIC` | FCM topic for the twice-daily "brief is out" push (default `brief`) |
+| `RADAR_SOURCE_COUNT` | Shown in the radar status strip (default 34) |
 
 Web (`client/.env`, or Netlify environment variables): `VITE_API_TARGET` for the dev proxy, `API_PROXY_TARGET` on Netlify, and the ad settings. Rename or re-color in `client/src/brand.js`. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
 

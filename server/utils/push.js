@@ -1,4 +1,5 @@
 const NewsItem = require('../models/NewsItem');
+const DailyBrief = require('../models/DailyBrief');
 
 // Breaking-news push alerts via Firebase Cloud Messaging.
 //
@@ -17,6 +18,12 @@ let sender; // (message) => Promise; undefined = not resolved yet, null = off
 
 function topic() {
   return process.env.PUSH_TOPIC || 'breaking';
+}
+
+// Briefs go to their own topic so readers can take breaking alerts without the
+// twice-daily brief, or the other way round (the app exposes both toggles).
+function briefTopic() {
+  return process.env.PUSH_BRIEF_TOPIC || 'brief';
 }
 
 function loadSender() {
@@ -98,4 +105,45 @@ async function alertBreaking(filter = {}) {
   return sent;
 }
 
-module.exports = { alertBreaking, buildMessage, setSender, topic };
+// "Morning Briefing is out" / "Evening Daily Brief is out": one push per brief
+// per day, claimed atomically on the brief document. n8n's payload may carry a
+// `push` object ({ heading, body }); otherwise a sensible default is used.
+function buildBriefMessage({ briefingDate, briefType, push = {} }) {
+  const date = briefingDate.toISOString().slice(0, 10);
+  const isEvening = briefType === 'evening';
+  const title = String(push.heading || (isEvening ? 'Evening Daily Brief is out' : 'Morning Briefing is out')).slice(0, 120);
+  const body = String(push.body || (isEvening ? 'The analyst brief: critical intelligence, graded forecasts and the next 72 hours.' : 'The last 24 hours of AI, consolidated and graded.')).slice(0, 180);
+  const id = `brief-${date}-${briefType}`;
+  return {
+    topic: briefTopic(),
+    notification: { title, body },
+    data: { type: 'brief', date, briefType, url: String(push.url || '') },
+    android: { priority: 'high', collapseKey: id },
+    apns: { headers: { 'apns-collapse-id': id.slice(0, 64) }, payload: { aps: { sound: 'default' } } },
+  };
+}
+
+async function alertBrief({ briefingDate, briefType, push }) {
+  const send = getSender();
+  if (!send || !briefingDate) return 0;
+  try {
+    const claimed = await DailyBrief.updateOne(
+      { briefingDate, briefType, alertedAt: null },
+      { $set: { alertedAt: new Date() } }
+    );
+    if (!claimed.modifiedCount) return 0;
+    try {
+      await send(buildBriefMessage({ briefingDate, briefType, push: push && typeof push === 'object' ? push : {} }));
+      return 1;
+    } catch (err) {
+      await DailyBrief.updateOne({ briefingDate, briefType }, { $unset: { alertedAt: 1 } });
+      console.error('push: brief send failed', err.message);
+      return 0;
+    }
+  } catch (err) {
+    console.error('push: alertBrief error:', err);
+    return 0;
+  }
+}
+
+module.exports = { alertBreaking, alertBrief, buildMessage, buildBriefMessage, setSender, topic, briefTopic };

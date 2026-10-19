@@ -92,6 +92,8 @@ class CommentsState extends ChangeNotifier {
     final data = await _api.post('/comments', {
       'newsItem': newsItemId,
       'body': body,
+      // Tells the evening analyst where the discussion came from.
+      'platform': defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
       if (replyTo != null) 'parent': replyTo!.id,
     });
     _comments = [..._comments, Comment.fromJson(data['comment'] as Map<String, dynamic>)];

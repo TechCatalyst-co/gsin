@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
-    <!-- Flare red, reserved for breaking news. -->
-    <color name="notification_accent">#E5391B</color>
+    <color name="ic_launcher_background">#0B1F3B</color>
+    <color name="launch_background">#0B1F3B</color>
+    <!-- Royal Blue: the one action color in the Global SI style guide. -->
+    <color name="notification_accent">#2E7DFF</color>
 </resources>

@@ -5,6 +5,7 @@ const apiKey = require('../middleware/apiKey');
 const { machineLimiter, readLimiter } = require('../middleware/rateLimit');
 const { normalizeItem, upsertNewsItems } = require('../utils/ingest');
 const { isSafeUrl } = require('../utils/slug');
+const { alertBrief } = require('../utils/push');
 
 const router = express.Router();
 
@@ -59,19 +60,39 @@ async function mirrorItemsToNews(items = []) {
   return normalized.length;
 }
 
+const BRIEF_TYPES = ['morning', 'evening'];
+function briefTypeOf(value) {
+  const t = String(value || '').toLowerCase();
+  return BRIEF_TYPES.includes(t) ? t : null;
+}
+const strList = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
+const objList = (v, map) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object').map(map) : []);
+const dateOrUndefined = (v) => { const d = v ? new Date(v) : null; return d && !Number.isNaN(d.getTime()) ? d : undefined; };
+
 // Shape a brief item from the n8n payload, keeping only safe-url items.
 function mapItem(raw) {
+  // Global SI sends `published` as a human label and `published_at` as ISO.
+  const published = dateOrUndefined(raw.published_at) || dateOrUndefined(raw.published);
   return {
     title: raw.title,
     headline: raw.headline,
     url: raw.url,
     source: raw.source || 'RSS',
-    published: raw.published ? new Date(raw.published) : undefined,
-    category: raw.category,
-    urgent: !!raw.urgent,
+    published,
+    // The desk (domain) is what readers navigate by; the event type is `kind`.
+    category: raw.domain || raw.category,
+    kind: raw.domain ? raw.category : undefined,
+    urgent: !!raw.urgent || Number(raw.urgency_tier) === 1,
     impact: raw.impact,
     tier1: !!raw.tier1,
     brand: !!raw.brand,
+    urgencyTier: Number.isFinite(Number(raw.urgency_tier)) ? Number(raw.urgency_tier) : undefined,
+    signalScore: Number.isFinite(Number(raw.signal_score)) ? Number(raw.signal_score) : undefined,
+    primarySource: raw.primary_source === true,
+    domain: raw.domain,
+    direction: raw.direction,
+    storyKey: raw.story_key,
+    industryLine: raw.industry_line,
   };
 }
 
@@ -88,6 +109,9 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
     if (!briefingDate) {
       return res.status(400).json({ error: 'A valid briefing_date is required' });
     }
+    // Global SI sends two briefs a day. A payload without a type is the legacy
+    // single morning edition.
+    const briefType = briefTypeOf(payload.brief_type ?? payload.briefType) || 'morning';
 
     // Prefer app_items (the app-shaped list); fall back to the full items list.
     const rawItems = Array.isArray(payload.app_items) && payload.app_items.length
@@ -99,6 +123,7 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
 
     const doc = {
       briefingDate,
+      briefType,
       briefingDateLabel: payload.briefing_date,
       windowStart: payload.window_start,
       windowEnd: payload.window_end,
@@ -111,16 +136,43 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
       positiveCount: payload.positive_count ?? 0,
       tier1Count: payload.tier1_count ?? 0,
       brandCount: payload.brand_count ?? 0,
+      threatCount: payload.threat_count ?? 0,
+      upcomingCount: payload.upcoming_count ?? 0,
       items,
-    };
 
-    await DailyBrief.updateOne({ briefingDate }, { $set: doc }, { upsert: true });
+      // Global SI fields.
+      plainSummary: payload.plain_summary,
+      watchToday: payload.watch_today,
+      horizonNote: payload.horizon_note,
+      generatedAt: dateOrUndefined(payload.generated_at),
+      rubricVersion: payload.rubric_version,
+      byDomain: payload.by_domain && typeof payload.by_domain === 'object' ? payload.by_domain : undefined,
+      contentLabels: payload.content_labels && typeof payload.content_labels === 'object' ? payload.content_labels : undefined,
+      criticalIntelligence: objList(payload.critical_intelligence, (c) => ({
+        headline: c.headline, whyItMatters: c.why_it_matters ?? c.whyItMatters, priority: c.priority, domain: c.domain, category: c.category,
+        url: c.url && isSafeUrl(c.url) ? c.url : undefined,
+      })),
+      emergingTrends: objList(payload.emerging_trends, (t) => ({ trend: t.trend, evidence: t.evidence, domain: t.domain })),
+      crossDomainInsights: strList(payload.cross_domain_insights),
+      forwardWatchlist: objList(payload.forward_watchlist, (w) => ({ item: w.item, window: w.window, why: w.why })),
+      watchlistFollowup: objList(payload.watchlist_followup, (f) => ({ predicted: f.predicted, status: f.status, evidence: f.evidence })),
+      confidence: Number.isFinite(Number(payload.confidence)) ? Math.max(0, Math.min(100, Number(payload.confidence))) : undefined,
+      qaNote: payload.qa_note,
+    };
+    // Only write fields that were sent, so a re-send never blanks a section.
+    for (const k of Object.keys(doc)) if (doc[k] === undefined) delete doc[k];
+
+    await DailyBrief.updateOne({ briefingDate, briefType }, { $set: doc }, { upsert: true });
 
     // Mirror the day's items into NewsItem so every card is authorable (counts
-    // preserved; re-ingesting never resets an already-reviewed article).
-    await mirrorItemsToNews(items);
+    // preserved; re-ingesting never resets an already-reviewed article). The
+    // full raw items go through so the grading fields land too.
+    await mirrorItemsToNews(rawItems.filter((i) => i && i.title && i.url && isSafeUrl(i.url)));
 
-    res.json({ ok: true, briefingDate, itemCount: items.length });
+    // One push per brief per day ("Morning Briefing is out"), if push is on.
+    const alerted = await alertBrief({ briefingDate, briefType, push: payload.push });
+
+    res.json({ ok: true, received: true, briefingDate, brief_type: briefType, date_slug: briefingDate.toISOString().slice(0, 10), itemCount: items.length, items: items.length, alerted });
   } catch (err) {
     console.error('daily-brief ingest error:', err);
     res.status(500).json({ error: 'Failed to ingest daily brief' });
@@ -129,9 +181,10 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
 
 // GET /api/daily-brief/latest — the newest brief. Default view of the page.
 // (Declared before /:date so "latest" isn't captured as a date.)
-router.get('/latest', readLimiter, async (_req, res) => {
+router.get('/latest', readLimiter, async (req, res) => {
   try {
-    const brief = await DailyBrief.findOne().sort({ briefingDate: -1 }).lean();
+    const type = briefTypeOf(req.query.type);
+    const brief = await DailyBrief.findOne(type ? { briefType: type } : {}).sort({ briefingDate: -1, updatedAt: -1 }).lean();
     res.json({ brief: brief ? await withDiscussion(brief) : null });
   } catch (err) {
     console.error('daily-brief latest error:', err);
@@ -139,27 +192,51 @@ router.get('/latest', readLimiter, async (_req, res) => {
   }
 });
 
+// GET /api/daily-brief/list?limit=20&type= — recent briefs without their
+// items (the Intelligence page and the app's dossier list).
+router.get('/list', readLimiter, async (req, res) => {
+  try {
+    const type = briefTypeOf(req.query.type);
+    const limit = Math.min(60, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const rows = await DailyBrief.find(type ? { briefType: type } : {})
+      .sort({ briefingDate: -1, briefType: -1 })
+      .limit(limit)
+      .select('-items -byDomain -contentLabels')
+      .lean();
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ count: rows.length, briefs: rows.map((b) => ({ ...b, dateSlug: b.briefingDate.toISOString().slice(0, 10) })) });
+  } catch (err) {
+    console.error('daily-brief list error:', err);
+    res.status(500).json({ error: 'Failed to list briefs' });
+  }
+});
+
 // GET /api/daily-brief/dates — the days that have a brief (newest first), so
 // the archive calendar can enable only those days. (Declared before /:date.)
 router.get('/dates', readLimiter, async (_req, res) => {
   try {
-    const rows = await DailyBrief.find().sort({ briefingDate: -1 }).select('briefingDate').lean();
-    res.json({ dates: rows.map((r) => r.briefingDate.toISOString().slice(0, 10)) });
+    const rows = await DailyBrief.find().sort({ briefingDate: -1 }).select('briefingDate briefType').lean();
+    const dates = [...new Set(rows.map((r) => r.briefingDate.toISOString().slice(0, 10)))];
+    res.json({ dates, editions: rows.map((r) => ({ date: r.briefingDate.toISOString().slice(0, 10), type: r.briefType })) });
   } catch (err) {
     console.error('daily-brief dates error:', err);
     res.status(500).json({ error: 'Failed to fetch brief dates' });
   }
 });
 
-// GET /api/daily-brief/:date — the brief for a specific day (YYYY-MM-DD).
-router.get('/:date', readLimiter, async (req, res) => {
+// GET /api/daily-brief/:date[/:type] — the brief for a specific day
+// (YYYY-MM-DD). With no type (or ?type=), the newest edition of that day.
+router.get('/:date/:type?', readLimiter, async (req, res) => {
   try {
     const range = utcDayRange(req.params.date);
     if (!range) return res.status(400).json({ error: 'Invalid date (expected YYYY-MM-DD)' });
+    const type = briefTypeOf(req.params.type || req.query.type);
+    if ((req.params.type || req.query.type) && !type) return res.status(400).json({ error: 'type must be morning or evening' });
 
     const brief = await DailyBrief.findOne({
       briefingDate: { $gte: range.start, $lt: range.end },
-    }).lean();
+      ...(type ? { briefType: type } : {}),
+    }).sort({ updatedAt: -1 }).lean();
     if (!brief) return res.status(404).json({ error: 'No brief for that day' });
     res.json({ brief: await withDiscussion(brief) });
   } catch (err) {

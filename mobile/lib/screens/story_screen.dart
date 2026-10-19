@@ -6,7 +6,9 @@ import 'package:share_plus/share_plus.dart';
 import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
+import '../api/gsi_api.dart';
 import '../auth/auth_state.dart';
+import '../brand.dart';
 import '../config.dart' show webBaseUrl;
 import '../models/comment.dart';
 import '../models/news_item.dart';
@@ -15,7 +17,9 @@ import '../theme/app_theme.dart';
 import '../widgets/comment_tile.dart';
 import '../widgets/common.dart';
 
-/// One story: summary, why it matters, analysis, related, discussion.
+/// One story as an instrument: chips, headline, the four readings, plain
+/// English, why it matters, the verified-source block, every capture of the
+/// same story, the grading panel, analysis, related, discussion.
 class StoryScreen extends StatefulWidget {
   const StoryScreen({super.key, required this.ref, this.preview});
 
@@ -29,6 +33,7 @@ class StoryScreen extends StatefulWidget {
 class _StoryScreenState extends State<StoryScreen> {
   NewsItem? _item;
   List<NewsItem> _related = const [];
+  List<NewsItem> _captures = const [];
   String? _error;
 
   @override
@@ -39,16 +44,28 @@ class _StoryScreenState extends State<StoryScreen> {
   }
 
   Future<void> _load() async {
+    final api = context.read<ApiClient>();
     try {
-      final data = await context.read<ApiClient>().get('/news/${Uri.encodeComponent(widget.ref)}');
+      final data = await api.get('/news/${Uri.encodeComponent(widget.ref)}');
       if (!mounted) return;
+      final item = NewsItem.fromJson(data['item'] as Map<String, dynamic>);
       setState(() {
-        _item = NewsItem.fromJson(data['item'] as Map<String, dynamic>);
+        _item = item;
         _related = NewsItem.listFrom(data['related']);
         _error = null;
       });
+      if (item.storyKey != null && item.storyKey!.isNotEmpty) {
+        try {
+          final group = await api.storyGroup(item.storyKey!);
+          if (mounted) setState(() => _captures = group.captures.where((c) => c.id != item.id).toList());
+        } catch (_) {
+          /* captures are optional */
+        }
+      }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.status == 404 ? 'This story is no longer available.' : e.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Could not load the story.');
     }
   }
 
@@ -78,9 +95,7 @@ class _StoryScreenState extends State<StoryScreen> {
     if (item == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: _error != null
-            ? EmptyState(title: 'Story not found', body: _error!)
-            : Center(child: CircularProgressIndicator(color: p.signal)),
+        body: _error != null ? EmptyState(title: 'Story not found', body: _error!) : const Center(child: RadarLoading(text: 'Opening the story…')),
       );
     }
     final auth = context.watch<AuthState>();
@@ -91,10 +106,11 @@ class _StoryScreenState extends State<StoryScreen> {
       create: (ctx) => CommentsState(ctx.read<ApiClient>(), ctx.read<AuthState>(), item.id)..load(),
       child: Scaffold(
         appBar: AppBar(
+          title: const Wordmark(size: 12),
           actions: [
             IconButton(
               tooltip: item.bookmarked ? 'Remove from saved' : 'Save',
-              icon: Icon(item.bookmarked ? Icons.bookmark : Icons.bookmark_border),
+              icon: Icon(item.bookmarked ? Icons.bookmark : Icons.bookmark_border, color: item.bookmarked ? p.signal : null),
               onPressed: _toggleBookmark,
             ),
             IconButton(
@@ -109,15 +125,16 @@ class _StoryScreenState extends State<StoryScreen> {
             Expanded(
               child: RefreshIndicator(
                 color: p.signal,
+                backgroundColor: p.surface,
                 onRefresh: _load,
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
-                    _StoryBody(item: item),
+                    _StoryBody(item: item, captures: _captures),
                     const AdSlot(AdPlacement.storyEnd),
                     const _Discussion(),
                     if (_related.isNotEmpty) ...[
-                      const SectionLabel('Related'),
+                      const SectionHeader('Related'),
                       for (final r in _related) StoryTile(item: r),
                     ],
                   ],
@@ -133,81 +150,254 @@ class _StoryScreenState extends State<StoryScreen> {
 }
 
 class _StoryBody extends StatelessWidget {
-  const _StoryBody({required this.item});
+  const _StoryBody({required this.item, required this.captures});
 
   final NewsItem item;
+  final List<NewsItem> captures;
+
+  void _openGrading(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SingleChildScrollView(child: GradingPanel(item: item)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final body = reading(size: 18.5, color: p.ink, height: 1.6);
+    final body = reading(size: 16, color: p.ink, height: 1.6);
+    final dek = item.headline != null && item.headline!.isNotEmpty && item.headline != item.title ? item.headline : null;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(spacing: 12, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            CategoryLabel(name: item.category),
-            if (item.urgent) const BreakingFlag(),
-          ]),
+          ItemChips(item: item, tappableDomain: true),
           const SizedBox(height: 12),
-          Text(item.title, style: display(size: 30, weight: FontWeight.w800, color: p.ink, height: 1.05)),
-          if (item.headline != null && item.headline!.isNotEmpty) ...[
+          Text(item.title, style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1.12, letterSpacing: -0.3)),
+          if (dek != null) ...[
             const SizedBox(height: 10),
-            Text(item.headline!, style: reading(size: 19, color: p.ink2, height: 1.4)),
+            Text(dek, style: reading(size: 16.5, color: p.ink2, height: 1.4)),
           ],
           const SizedBox(height: 12),
           Text(
-            '${item.author != null ? '${item.author}, ' : ''}${item.source}   ${timeAgo(item.published)}',
-            style: display(size: 13.5, weight: FontWeight.w400, color: p.slate),
+            '${item.author != null ? '${item.author}, ' : ''}${item.source}   ·   ${timeAgo(item.published)}${item.geo != null ? '   ·   ${item.geo}' : ''}',
+            style: reading(size: 13, color: p.slate),
           ),
-          if (isSafeHttpUrl(item.url)) ...[
+          if (item.graded) ...[
             const SizedBox(height: 14),
-            FilledButton.icon(
-              onPressed: () => openExternal(item.url),
-              icon: const Icon(Icons.open_in_new, size: 18),
-              label: Text('Read at ${item.source}'),
+            InstrumentStrip(item: item),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _openGrading(context),
+                icon: const Icon(Icons.tune, size: 16),
+                label: const Text('How this was graded'),
+              ),
             ),
           ],
-          if (item.imageUrl != null) ...[const SizedBox(height: 20), StoryImage(url: item.imageUrl)],
+          if (item.industryLine != null && item.industryLine!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            PlainEnglish(text: item.industryLine!),
+          ],
+          if (isSafeHttpUrl(item.imageUrl)) ...[const SizedBox(height: 18), StoryImage(url: item.imageUrl)],
           if (item.summary != null && item.summary!.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(item.summary!, style: body),
           ],
           if (item.impact != null && item.impact!.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.only(left: 14),
-              decoration: BoxDecoration(border: Border(left: BorderSide(color: p.signal, width: 4))),
+              decoration: BoxDecoration(border: Border(left: BorderSide(color: p.signal, width: 3))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Why it matters', style: display(size: 16, color: p.ink)),
+                Text('Why it matters', style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
                 const SizedBox(height: 4),
                 Text(item.impact!, style: body),
               ]),
             ),
           ],
+          if (item.whatIsNew != null && item.whatIsNew!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text.rich(TextSpan(children: [
+              TextSpan(text: 'What is new. ', style: reading(size: 15, color: p.ink, weight: FontWeight.w600, height: 1.5)),
+              TextSpan(text: item.whatIsNew, style: reading(size: 15, color: p.ink2, height: 1.5)),
+            ])),
+          ],
+          if (item.whoCares != null && item.whoCares!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text.rich(TextSpan(children: [
+              TextSpan(text: 'Who this affects. ', style: reading(size: 15, color: p.ink, weight: FontWeight.w600, height: 1.5)),
+              TextSpan(text: item.whoCares, style: reading(size: 15, color: p.ink2, height: 1.5)),
+            ])),
+          ],
+          const SizedBox(height: 18),
+          _VerifiedBlock(item: item),
+          if (captures.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            Text('Every capture of this story', style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
+            const SizedBox(height: 4),
+            Text('${captures.length + 1} captures. The lead is the primary source when one exists.', style: reading(size: 12.5, color: p.slate)),
+            const SizedBox(height: 8),
+            for (final c in captures) _CaptureLine(item: c),
+          ],
           if (item.analysis != null && item.analysis!.isNotEmpty) ...[
             const AdSlot(AdPlacement.storyInline, padded: false),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(10), border: Border.all(color: p.line)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Analysis', style: display(size: 16, color: p.ink)),
-                const SizedBox(height: 6),
+                Row(children: [
+                  Text('Analysis', style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
+                  const Spacer(),
+                  const LabelChip(LabelKind.analysis),
+                ]),
+                const SizedBox(height: 8),
                 for (final para in item.analysis!.split(RegExp(r'\n{2,}')))
                   Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(para, style: body)),
               ]),
             ),
           ],
-          if (item.tags.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Wrap(spacing: 8, runSpacing: 8, children: [
+          if (item.entities.isNotEmpty || item.tags.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final e in item.entities) GsiChip(e),
               for (final t in item.tags)
-                ActionChip(label: Text('#$t'), onPressed: () => context.push('/search?tag=${Uri.encodeComponent(t)}')),
+                InkWell(
+                  onTap: () => context.push('/search?tag=${Uri.encodeComponent(t)}'),
+                  child: GsiChip('#$t'),
+                ),
             ]),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The source, sealed: primary or reported, with the link out.
+class _VerifiedBlock extends StatelessWidget {
+  const _VerifiedBlock({required this.item});
+  final NewsItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final verified = item.primarySource;
+    final host = Uri.tryParse(item.url)?.host.replaceFirst('www.', '') ?? '';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: verified ? p.signal.withValues(alpha: 0.6) : p.line),
+      ),
+      child: Row(children: [
+        Icon(verified ? Icons.verified_outlined : Icons.description_outlined, size: 28, color: verified ? p.signal : p.slate),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(verified ? 'Verified primary source' : 'Reported', style: display(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+            const SizedBox(height: 2),
+            Text(
+              verified ? '${item.source} published this itself.${host.isNotEmpty ? ' $host' : ''}' : 'Coverage by ${item.source}.${host.isNotEmpty ? ' $host' : ''}',
+              style: reading(size: 12.5, color: p.slate, height: 1.35),
+            ),
+          ]),
+        ),
+        if (isSafeHttpUrl(item.url)) ...[
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: () => openExternal(item.url),
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: const Text('Open'),
+            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+          ),
+        ],
+      ]),
+    );
+  }
+}
+
+class _CaptureLine extends StatelessWidget {
+  const _CaptureLine({required this.item});
+  final NewsItem item;
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return InkWell(
+      onTap: () => openStory(context, item),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),
+        child: Row(children: [
+          SizedBox(width: 36, child: Text(ageShort(item.published), style: figures(size: 12, color: p.slate, weight: FontWeight.w600))),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: reading(size: 13.5, color: p.ink, weight: FontWeight.w500, height: 1.3)),
+              const SizedBox(height: 2),
+              Text(item.source, style: reading(size: 12, color: p.slate)),
+            ]),
+          ),
+          if (item.primarySource) Icon(Icons.verified_outlined, size: 14, color: p.signal),
+        ]),
+      ),
+    );
+  }
+}
+
+/// The pull-up grading panel: tier, score, the readings behind it, direction,
+/// horizon, and the rubric line for the tier.
+class GradingPanel extends StatelessWidget {
+  const GradingPanel({super.key, required this.item});
+  final NewsItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final tier = item.tier;
+    Widget row(String k, String v, {Color? color}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(children: [
+            SizedBox(width: 120, child: Text(k, style: display(size: 11, weight: FontWeight.w600, color: p.slate, letterSpacing: 0.5))),
+            Expanded(child: Text(v, style: reading(size: 14.5, color: color ?? p.ink, weight: FontWeight.w500, height: 1.35))),
+          ]),
+        );
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            SignalGauge(score: item.signalScore ?? 0, size: 64),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Tier $tier · ${tierName[tier] ?? ''}', style: display(size: 18, weight: FontWeight.w700, color: p.ink)),
+                const SizedBox(height: 4),
+                Text(tierMeaning[tier] ?? '', style: reading(size: 13, color: p.ink2, height: 1.4)),
+              ]),
+            ),
+          ]),
+          const SizedBox(height: 14),
+          Divider(color: p.line),
+          const SizedBox(height: 6),
+          row('SIGNAL SCORE', '${item.signalScore ?? '—'} of 100 — relevance × freshness × primary source × corroboration'),
+          if (item.relevance != null) row('RELEVANCE', '${item.relevance} of 100'),
+          row('FRESHNESS', item.freshLabel == '—' ? 'unknown' : '${item.freshLabel} old (gate: 24 h for Tier 1, 7 days for everything)'),
+          row('SOURCE', item.primarySource ? 'Primary — the acting party published it' : 'Reported — coverage of the action', color: item.primarySource ? p.signal : null),
+          row('CORROBORATION', '${item.sourceCount ?? 1} capture${(item.sourceCount ?? 1) == 1 ? '' : 's'}'),
+          if (item.direction != null) row('DIRECTION', item.direction!),
+          if (item.horizon != null) row('HORIZON', item.horizon!),
+          if (item.updateType != null) row('UPDATE', item.updateType!),
+          if (item.contentType != null) row('CONTENT', item.contentType!.replaceAll('_', ' ')),
+          if (item.dimensions.isNotEmpty) row('ALSO TOUCHES', item.dimensions.map(domainShort).join(', ')),
+          const SizedBox(height: 10),
+          Text('The rubric is enforced in code before anything posts: Tier 1 needs a primary source under 24 hours; nothing older than seven days; echoes are demoted.',
+              style: reading(size: 12.5, color: p.slate, height: 1.4)),
+        ]),
       ),
     );
   }

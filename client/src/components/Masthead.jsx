@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { CATEGORIES } from '../brand';
+import { BRAND, CATEGORIES, NAV } from '../brand';
 import Wordmark from './Wordmark';
+import ThemeToggle from './ThemeToggle';
 
 export default function Masthead() {
   const { user, logout } = useAuth();
@@ -18,13 +19,13 @@ export default function Masthead() {
     if (q.trim()) nav(`/search?q=${encodeURIComponent(q.trim())}`);
   };
 
-  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-
   return (
     <header className="masthead">
       <div className="masthead-top shell">
-        <Link to="/" className="masthead-brand" aria-label="Global Super Intelligence News home"><Wordmark /></Link>
-        <span className="masthead-date">{today}</span>
+        <Link to="/" className="masthead-brand" aria-label={`${BRAND.name} home`}><Wordmark /></Link>
+        <nav className="primary-nav" aria-label="Sections">
+          {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.end}>{n.label}</NavLink>)}
+        </nav>
         <form className="masthead-search" onSubmit={search} role="search">
           <input type="search" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} />
         </form>
@@ -39,20 +40,23 @@ export default function Masthead() {
           ) : (
             <>
               <NavLink to="/login" className="link">Sign in</NavLink>
-              <Link to="/register" className="btn primary sm">Create free account</Link>
+              <Link to="/register" className="btn primary sm">Join free</Link>
             </>
           )}
         </div>
+        <ThemeToggle />
         <button className="masthead-menu" aria-expanded={menuOpen} aria-controls="desk-nav" onClick={() => setMenuOpen((o) => !o)}>
           {menuOpen ? 'Close' : 'Menu'}
         </button>
       </div>
-      <nav id="desk-nav" className={`desks${menuOpen ? ' open' : ''}`} aria-label="Topics">
+      <nav id="desk-nav" className={`desks${menuOpen ? ' open' : ''}`} aria-label="Desks">
         <div className="shell desks-row">
-          <NavLink to="/newsroom" end className="desk">Top stories</NavLink>
-          <NavLink to="/brief" className="desk desk--brief">Daily Brief</NavLink>
+          <NavLink to="/" end className="desk">All signal</NavLink>
+          <NavLink to="/intelligence" className="desk desk--brief">Briefs</NavLink>
+          <NavLink to="/watchlist" className="desk mobile-only">Watchlist</NavLink>
+          <NavLink to="/research" className="desk mobile-only">Research</NavLink>
           {CATEGORIES.map((c) => (
-            <NavLink key={c.slug} to={`/topic/${c.slug}`} className="desk">{c.name}</NavLink>
+            <NavLink key={c.slug} to={`/topic/${c.slug}`} className="desk">{c.short}</NavLink>
           ))}
           <form className="desks-search" onSubmit={search} role="search">
             <input type="search" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} />

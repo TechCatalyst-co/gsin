@@ -7,6 +7,9 @@ const { machineLimiter, readLimiter } = require('../middleware/rateLimit');
 const { capabilitiesFor } = require('../utils/capabilities');
 const { normalizeItem, isValid, upsertNewsItems } = require('../utils/ingest');
 const { alertBreaking } = require('../utils/push');
+const DailyBrief = require('../models/DailyBrief');
+
+const SOURCE_COUNT = parseInt(process.env.RADAR_SOURCE_COUNT, 10) || 34;
 
 const router = express.Router();
 
@@ -19,10 +22,22 @@ function serialize(item, caps) {
   return out;
 }
 
+// The body is one item, an array of items, or the Global SI Radar's envelope
+// ({ kind: 'radar_breaking', push, 'app-items': [...] }). Only the items are
+// stored; the envelope's email/push fields are n8n's own.
+function unwrapItems(body) {
+  if (Array.isArray(body)) return body;
+  if (!body || typeof body !== 'object') return [];
+  for (const key of ['app-items', 'app_items', 'items']) {
+    if (Array.isArray(body[key])) return body[key];
+  }
+  return [body];
+}
+
 // POST /api/news — n8n pushes items here (upsert by url). Key-protected.
 router.post('/', machineLimiter, apiKey, async (req, res) => {
   try {
-    const raw = Array.isArray(req.body) ? req.body : [req.body];
+    const raw = unwrapItems(req.body);
     if (!raw.length || (raw.length === 1 && (!raw[0] || !Object.keys(raw[0]).length))) {
       return res.status(400).json({ error: 'Empty payload' });
     }
@@ -45,11 +60,20 @@ router.post('/', machineLimiter, apiKey, async (req, res) => {
 router.get('/', readLimiter, optionalAuth, async (req, res) => {
   try {
     const caps = capabilitiesFor(req.user);
-    const { category, tag, urgent, featured, search, since, sort = 'latest', page = 1, limit = 30 } = req.query;
+    const { category, domain, tier, horizon, tag, urgent, featured, search, since, hours, sort = 'latest', page = 1, limit = 30 } = req.query;
 
     const filter = {};
     if (!caps.curate || req.query.includeHidden !== 'true') filter.hidden = { $ne: true };
-    if (category) filter.category = category;
+    // `domain` is the Global SI name for the desk; several may be passed.
+    const desks = [].concat(category || [], domain || []).filter(Boolean);
+    if (desks.length === 1) filter.category = desks[0];
+    else if (desks.length > 1) filter.category = { $in: desks };
+    // Global SI grading filters: tier (at most), horizon, and a rolling window.
+    const maxTier = parseInt(tier, 10);
+    if (maxTier >= 1 && maxTier <= 4) filter.urgencyTier = { $lte: maxTier };
+    if (horizon) filter.horizon = String(horizon);
+    const hrs = parseInt(hours, 10);
+    if (hrs > 0) filter.published = { $gte: new Date(Date.now() - hrs * 3600 * 1000) };
     if (tag) filter.tags = String(tag).toLowerCase();
     if (urgent === 'true') filter.urgent = true;
     if (featured === 'true') filter.featured = true;
@@ -66,7 +90,9 @@ router.get('/', readLimiter, optionalAuth, async (req, res) => {
     const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 30));
     const sortSpec = sort === 'discussed'
       ? { commentCount: -1, published: -1 }
-      : { published: -1, createdAt: -1 };
+      : sort === 'signal'
+        ? { urgencyTier: 1, signalScore: -1, published: -1 }
+        : { published: -1, createdAt: -1 };
 
     const [items, total] = await Promise.all([
       NewsItem.find(filter).sort(sortSpec).skip((pageNum - 1) * pageSize).limit(pageSize).lean(),
@@ -117,6 +143,53 @@ router.get('/front-page', readLimiter, optionalAuth, async (req, res) => {
   } catch (err) {
     console.error('front-page error:', err);
     res.status(500).json({ error: 'Failed to fetch front page' });
+  }
+});
+
+// GET /api/news/status — what the radar is doing right now (the live strip on
+// every page of the web and app). Public, cached a minute.
+router.get('/status', readLimiter, async (_req, res) => {
+  try {
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const visible = { hidden: { $ne: true } };
+    const [last, stories24h, breaking24h, latestBrief] = await Promise.all([
+      NewsItem.findOne(visible).sort({ capturedAt: -1, createdAt: -1 }).select('capturedAt createdAt').lean(),
+      NewsItem.countDocuments({ ...visible, published: { $gte: dayAgo }, $or: [{ urgencyTier: { $lte: 3 } }, { urgencyTier: null }] }),
+      NewsItem.countDocuments({ ...visible, urgent: true, published: { $gte: dayAgo } }),
+      DailyBrief.findOne().sort({ briefingDate: -1, updatedAt: -1 }).select('generatedAt updatedAt briefType briefingDate').lean(),
+    ]);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({
+      source_count: SOURCE_COUNT,
+      last_capture_at: last ? (last.capturedAt || last.createdAt) : null,
+      stories_24h: stories24h,
+      breaking_24h: breaking24h,
+      latest_brief_at: latestBrief ? (latestBrief.generatedAt || latestBrief.updatedAt) : null,
+      latest_brief_type: latestBrief ? latestBrief.briefType : null,
+    });
+  } catch (err) {
+    console.error('status error:', err);
+    res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
+
+// GET /api/news/story/:storyKey — every capture of one underlying story. The
+// lead is the primary-source capture with the highest signal; the rest are
+// other outlets' coverage (echoes). Public.
+router.get('/story/:storyKey', readLimiter, optionalAuth, async (req, res) => {
+  try {
+    const caps = capabilitiesFor(req.user);
+    const key = String(req.params.storyKey || '').slice(0, 200);
+    const captures = await NewsItem.find({ storyKey: key, hidden: { $ne: true } })
+      .sort({ primarySource: -1, signalScore: -1, published: -1 })
+      .limit(20)
+      .lean();
+    if (!captures.length) return res.status(404).json({ error: 'Story not found' });
+    res.set('Cache-Control', req.user ? 'private, no-store' : 'public, max-age=60');
+    res.json({ lead: serialize(captures[0], caps), captures: captures.map((c) => serialize(c, caps)) });
+  } catch (err) {
+    console.error('story group error:', err);
+    res.status(500).json({ error: 'Failed to fetch story' });
   }
 });
 

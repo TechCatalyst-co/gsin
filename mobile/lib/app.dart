@@ -9,24 +9,28 @@ import 'brand.dart';
 import 'models/news_item.dart';
 import 'push/push_service.dart';
 import 'screens/account_screen.dart';
-import 'screens/brief_screen.dart';
 import 'screens/change_password_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/intelligence_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/newsroom_screen.dart';
+import 'screens/radar_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/saved_screen.dart';
+import 'screens/signal_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/story_screen.dart';
 import 'screens/topics_screen.dart';
+import 'screens/watchlist_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/common.dart';
+import 'widgets/radar_strip.dart';
 
 class GsinApp extends StatefulWidget {
-  const GsinApp({super.key, required this.auth, required this.push});
+  const GsinApp({super.key, required this.auth, required this.push, required this.theme});
 
   final AuthState auth;
   final PushService push;
+  final ThemeController theme;
 
   @override
   State<GsinApp> createState() => _GsinAppState();
@@ -34,8 +38,8 @@ class GsinApp extends StatefulWidget {
 
 class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
   final _messenger = GlobalKey<ScaffoldMessengerState>();
-  StreamSubscription<BreakingAlert>? _foregroundAlerts;
-  BreakingAlert? _pendingAlert;
+  StreamSubscription<PushAlert>? _foregroundAlerts;
+  PushAlert? _pendingAlert;
 
   @override
   void initState() {
@@ -55,9 +59,9 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // A tapped alert opens its story on top of the Daily Brief. On a cold start the
-  // splash is still deciding auth, so the story waits until it has.
-  void _openAlert(BreakingAlert alert) {
+  // A tapped alert opens its story (or brief) on top of the Signal tab. On a
+  // cold start the launch sequence is still running, so it waits for auth.
+  void _openAlert(PushAlert alert) {
     _pendingAlert = alert;
     _openPendingAlert();
   }
@@ -67,16 +71,16 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     if (alert == null || widget.auth.status == AuthStatus.unknown) return;
     _pendingAlert = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_router.state.matchedLocation == '/splash') _router.go('/brief');
-      _router.push('/story/${Uri.encodeComponent(alert.slug)}');
+      if (_router.state.matchedLocation == '/splash') _router.go('/');
+      _router.push(alert.route);
     });
   }
 
-  void _showForegroundAlert(BreakingAlert alert) {
+  void _showForegroundAlert(PushAlert alert) {
     _messenger.currentState?.showSnackBar(SnackBar(
-      content: Text('Breaking: ${alert.title ?? 'new story'}', maxLines: 2, overflow: TextOverflow.ellipsis),
+      content: Text(alert.isBrief ? (alert.title ?? 'A new brief is out') : 'Breaking: ${alert.title ?? 'new story'}', maxLines: 2, overflow: TextOverflow.ellipsis),
       duration: const Duration(seconds: 8),
-      action: SnackBarAction(label: 'Read', onPressed: () => _openAlert(alert)),
+      action: SnackBarAction(label: alert.isBrief ? 'Open' : 'Read', onPressed: () => _openAlert(alert)),
     ));
   }
 
@@ -100,14 +104,14 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
   late final GoRouter _router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: widget.auth,
-    // Reading is public: only the splash, the forced password change, and
-    // staff-only screens redirect.
+    // Reading is public: only the forced password change and staff-only
+    // screens redirect. The launch screen leaves on its own once the sequence
+    // has finished and the stored session has been restored.
     redirect: (context, state) {
       final loc = state.matchedLocation;
       final auth = widget.auth;
-      if (auth.status == AuthStatus.unknown) return loc == '/splash' ? null : '/splash';
-      // The app opens on the Daily Brief.
-      if (loc == '/splash') return '/brief';
+      if (loc == '/splash') return null;
+      if (auth.status == AuthStatus.unknown) return '/splash';
       final user = auth.user;
       if (user != null && user.mustChangePassword && loc != '/change-password') return '/change-password';
       if (loc == '/change-password' && user == null) return '/login';
@@ -122,13 +126,18 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       GoRoute(
         path: '/story/:ref',
         builder: (context, state) => StoryScreen(
-          ref: state.pathParameters['ref']!,
+          ref: _decode(state.pathParameters['ref']!),
           preview: state.extra is NewsItem ? state.extra as NewsItem : null,
         ),
       ),
       GoRoute(
         path: '/topic/:name',
-        builder: (context, state) => FeedScreen(category: _decode(state.pathParameters['name']!)),
+        builder: (context, state) {
+          final raw = _decode(state.pathParameters['name']!);
+          // Accept either the desk name or its slug (deep links from the web).
+          final name = categoryFromSlug(raw)?.name ?? raw;
+          return FeedScreen(category: name);
+        },
       ),
       GoRoute(
         path: '/search',
@@ -137,14 +146,27 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
           tag: state.uri.queryParameters['tag'],
         ),
       ),
+      GoRoute(
+        path: '/intelligence/:date/:type',
+        builder: (context, state) => IntelligenceScreen(
+          date: state.pathParameters['date'],
+          type: state.pathParameters['type'],
+          standalone: true,
+        ),
+      ),
+      GoRoute(
+        path: '/intelligence/:date',
+        builder: (context, state) => IntelligenceScreen(date: state.pathParameters['date'], standalone: true),
+      ),
+      GoRoute(path: '/saved', builder: (context, state) => Scaffold(appBar: AppBar(title: const Text('Saved')), body: const SavedScreen())),
       GoRoute(path: '/newsroom', builder: (context, state) => const NewsroomScreen()),
       ShellRoute(
         builder: (context, state, child) => _HomeShell(location: state.matchedLocation, child: child),
         routes: [
-          GoRoute(path: '/', pageBuilder: (context, state) => _tab(state, const HomeScreen())),
-          GoRoute(path: '/topics', pageBuilder: (context, state) => _tab(state, const TopicsScreen())),
-          GoRoute(path: '/brief', pageBuilder: (context, state) => _tab(state, const BriefScreen())),
-          GoRoute(path: '/saved', pageBuilder: (context, state) => _tab(state, const SavedScreen())),
+          GoRoute(path: '/', pageBuilder: (context, state) => _tab(state, const SignalScreen())),
+          GoRoute(path: '/radar', pageBuilder: (context, state) => _tab(state, const RadarScreen())),
+          GoRoute(path: '/intelligence', pageBuilder: (context, state) => _tab(state, const IntelligenceScreen())),
+          GoRoute(path: '/watchlist', pageBuilder: (context, state) => _tab(state, const WatchlistScreen())),
           GoRoute(path: '/account', pageBuilder: (context, state) => _tab(state, const AccountScreen())),
         ],
       ),
@@ -153,11 +175,12 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final mode = context.watch<ThemeController>().mode;
     return MaterialApp.router(
       title: Brand.name,
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: mode,
       routerConfig: _router,
       scaffoldMessengerKey: _messenger,
       debugShowCheckedModeBanner: false,
@@ -174,32 +197,42 @@ class _HomeShell extends StatelessWidget {
   final Widget child;
 
   static const _tabs = [
-    (path: '/', icon: Icons.bolt_outlined, active: Icons.bolt, label: 'Top'),
-    (path: '/topics', icon: Icons.grid_view_outlined, active: Icons.grid_view, label: 'Topics'),
-    (path: '/brief', icon: Icons.wb_sunny_outlined, active: Icons.wb_sunny, label: 'Brief'),
-    (path: '/saved', icon: Icons.bookmark_border, active: Icons.bookmark, label: 'For you'),
+    (path: '/', icon: Icons.graphic_eq, active: Icons.graphic_eq, label: 'Signal'),
+    (path: '/radar', icon: Icons.radar, active: Icons.radar, label: 'Radar'),
+    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Intelligence'),
+    (path: '/watchlist', icon: Icons.schedule_outlined, active: Icons.schedule, label: 'Watchlist'),
     (path: '/account', icon: Icons.person_outline, active: Icons.person, label: 'Account'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthState>().user;
+    final theme = context.watch<ThemeController>();
     var index = _tabs.indexWhere((t) => t.path != '/' && location.startsWith(t.path));
     if (index < 0) index = 0;
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
-        title: InkWell(onTap: () => context.go('/'), child: const Wordmark(size: 19)),
+        title: InkWell(onTap: () => context.go('/'), child: const Wordmark(size: 12.5)),
         actions: [
           if (user?.capabilities.curate ?? false)
             IconButton(tooltip: 'Newsroom', icon: const Icon(Icons.tune), onPressed: () => context.push('/newsroom')),
-          IconButton(tooltip: 'Search', icon: const Icon(Icons.search), onPressed: () => context.go('/topics')),
+          IconButton(
+            tooltip: theme.isDark ? 'Switch to light' : 'Switch to dark',
+            icon: Icon(theme.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            onPressed: theme.toggle,
+          ),
+          IconButton(tooltip: 'Search', icon: const Icon(Icons.search), onPressed: () => context.push('/search')),
         ],
       ),
-      body: child,
+      body: Column(children: [
+        const RadarStrip(),
+        Expanded(child: child),
+      ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => context.go(_tabs[i].path),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           for (final t in _tabs)
             NavigationDestination(icon: Icon(t.icon), selectedIcon: Icon(t.active), label: t.label),

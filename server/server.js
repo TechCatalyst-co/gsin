@@ -32,6 +32,9 @@ app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 (async () => {
   try {
     await connectDB();
+    // Briefs moved from one-per-day to one-per-day-and-type: make sure the old
+    // unique index on briefingDate alone is gone and the new pair index exists.
+    try { await require('./models/DailyBrief').syncIndexes(); } catch (err) { console.error('index sync:', err.message); }
     app.listen(PORT, () => console.log(`API listening on http://localhost:${PORT}`));
   } catch (err) {
     console.error('Failed to start:', err.message);

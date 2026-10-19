@@ -6,6 +6,7 @@ import { StoryList } from '../components/Story';
 import { useDocumentTitle } from './Home';
 
 const SORTS = [
+  { key: 'signal', label: 'Strongest signal' },
   { key: 'latest', label: 'Latest' },
   { key: 'discussed', label: 'Most discussed' },
 ];
@@ -13,11 +14,18 @@ const SORTS = [
 // Shared by /topic/:slug and /search — both are a filtered feed.
 export function FeedPage({ title, intro, query }) {
   const [params, setParams] = useSearchParams();
-  const sort = params.get('sort') || 'latest';
+  const sort = params.get('sort') || 'signal';
   const page = Math.max(1, Number(params.get('page')) || 1);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const qs = new URLSearchParams({ ...query, sort, page: String(page), limit: '25' }).toString();
+  // Array values (several desks) repeat the key, which the API reads as "any of".
+  const qs = (() => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries({ ...query, sort, page: String(page), limit: '25' })) {
+      for (const x of [].concat(v)) if (x != null && x !== '') p.append(k, x);
+    }
+    return p.toString();
+  })();
 
   useEffect(() => {
     setData(null);
@@ -93,4 +101,13 @@ export function Search() {
       query={query}
     />
   );
+}
+
+
+// Research: frontier releases, capability thresholds, safety and alignment work, medical research
+// and open-source releases — four desks in one feed.
+const RESEARCH_DESKS = ['Frontier Models & AGI', 'AI Safety & Alignment', 'Medical & Life Sciences', 'Open Source & Developer Tools'];
+export function Research() {
+  useDocumentTitle(`Research — ${BRAND.name}`);
+  return <FeedPage title="Research" intro="Frontier releases, capability thresholds, safety and alignment work, and the papers behind the claims." query={{ domain: RESEARCH_DESKS }} />;
 }
