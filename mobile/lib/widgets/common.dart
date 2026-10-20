@@ -390,13 +390,14 @@ class SectionHeader extends StatelessWidget {
     return Padding(
       padding: padding,
       child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(title, style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
         if (caption != null) ...[
+          Text(title, style: display(size: 15, weight: FontWeight.w700, color: p.ink)),
           const SizedBox(width: 8),
           Expanded(child: Text(caption!, style: reading(size: 12, color: p.slate, height: 1.3), overflow: TextOverflow.ellipsis)),
         ] else
-          const Spacer(),
-        ?trailing,
+          // Title takes the slack and wraps, so a long title never pushes the trailing chip off-screen.
+          Expanded(child: Text(title, style: display(size: 15, weight: FontWeight.w700, color: p.ink))),
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ]),
     );
   }
