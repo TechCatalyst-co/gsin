@@ -62,7 +62,7 @@ export const TIER_MEANING = {
 // Site sections (the primary navigation).
 export const NAV = [
   { to: '/', label: 'News', end: true },
-  { to: '/intelligence', label: 'Intelligence' },
+  { to: '/intelligence', label: 'Intel' },
   { to: '/topic/defense-national-security', label: 'Defense' },
   { to: '/research', label: 'Research' },
   { to: '/watchlist', label: 'Watchlist' },
