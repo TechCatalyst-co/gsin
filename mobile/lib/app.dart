@@ -199,7 +199,7 @@ class _HomeShell extends StatelessWidget {
   static const _tabs = [
     (path: '/', icon: Icons.graphic_eq, active: Icons.graphic_eq, label: 'Signal'),
     (path: '/radar', icon: Icons.radar, active: Icons.radar, label: 'Radar'),
-    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Intelligence'),
+    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Intel'),
     (path: '/watchlist', icon: Icons.schedule_outlined, active: Icons.schedule, label: 'Watchlist'),
     (path: '/account', icon: Icons.person_outline, active: Icons.person, label: 'Account'),
   ];
