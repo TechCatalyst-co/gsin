@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;width:1024px;height:500px;overflow:hidden}
+body{background:#0b1f3b;font-family:'Bricolage Grotesque',sans-serif;position:relative}
+.glow{position:absolute;inset:0;background:
+ radial-gradient(520px 380px at 245px 250px, rgba(59,130,246,.30), transparent 70%),
+ radial-gradient(420px 300px at 300px 170px, rgba(245,180,80,.14), transparent 70%),
+ radial-gradient(700px 500px at 900px 520px, rgba(59,59,245,.22), transparent 70%)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(90deg,transparent,#000 45%,#000)}
+.mark{position:absolute;left:40px;top:40px;width:420px;height:420px;object-fit:contain}
+.copy{position:absolute;left:470px;top:0;bottom:0;right:56px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{color:#f5b450;font-weight:700;letter-spacing:.22em;font-size:15px;text-transform:uppercase;display:flex;align-items:center;gap:12px}
+.eyebrow:before{content:"";width:34px;height:2px;background:linear-gradient(90deg,#f5b450,#ffd78a)}
+h1{margin:14px 0 0;color:#fff;font-weight:800;font-size:76px;line-height:.95;letter-spacing:-.02em;font-variation-settings:'wdth' 78}
+h1 span{background:linear-gradient(90deg,#ffc76b,#f5a83a);-webkit-background-clip:text;color:transparent}
+p{margin:20px 0 0;color:#b9bee0;font-size:24px;line-height:1.3;font-weight:500;max-width:470px}
+.dots{display:flex;gap:9px;margin-top:28px;align-items:center}
+.dots i{width:10px;height:10px;border-radius:50%}
+.dots b{color:#8e94bf;font-weight:600;font-size:14px;letter-spacing:.08em;margin-left:8px;text-transform:uppercase}
+</style></head><body>
+<div class="glow"></div><div class="grid"></div>
+<img class="mark" src="mark.png">
+<div class="copy">
+ <div class="eyebrow">The AI news wire</div>
+ <h1>Global <span>SI</span> News</h1>
+ <p>Every AI story summarized, graded, and briefed twice a day.</p>
+ <div class="dots"><i style="background:#2E7DFF"></i><i style="background:#8FA3C2"></i><i style="background:#5B9BFF"></i><i style="background:#7FC4A4"></i><i style="background:#C7D2E3"></i><i style="background:#9FB6FF"></i><i style="background:#6B8FD6"></i><i style="background:#B9C7E0"></i><i style="background:#D4AF37"></i><i style="background:#86B7FF"></i><b>10 desks · always free</b></div>
+</div>
+</body></html>
