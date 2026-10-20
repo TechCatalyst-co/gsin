@@ -58,3 +58,5 @@ server/.env.staging
 /.impeccable
 /.run
 /.vscode
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
