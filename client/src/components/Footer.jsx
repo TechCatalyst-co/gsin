@@ -29,7 +29,7 @@ export default function Footer() {
       </div>
       <div className="shell footer-copy">
         <span>© {new Date().getFullYear()} STS, LLC</span>
-        <span>Powered by <a href={OPERATOR.website} target="_blank" rel="noopener noreferrer">{OPERATOR.dba}</a></span>
+        <span>Developed & Powered by <a href={OPERATOR.website} target="_blank" rel="noopener noreferrer">{OPERATOR.dba}</a></span>
       </div>
     </footer>
   );
