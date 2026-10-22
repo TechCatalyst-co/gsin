@@ -107,7 +107,7 @@ API (`server/.env`):
 | `FIREBASE_SERVICE_ACCOUNT` | Optional. Firebase service-account JSON (raw or base64) to send breaking-news push alerts; empty = off |
 | `PUSH_TOPIC` | FCM topic for alerts (default `breaking`); the app's `--dart-define=PUSH_TOPIC` must match |
 | `PUSH_BRIEF_TOPIC` | FCM topic for the twice-daily "brief is out" push (default `brief`) |
-| `RADAR_SOURCE_COUNT` | Shown in the radar status strip (default 34) |
+| `RADAR_SOURCE_COUNT` | Shown in the radar status strip (default 44) |
 
 Web (`client/.env`, or Netlify environment variables): `VITE_API_TARGET` for the dev proxy, `API_PROXY_TARGET` on Netlify, and the ad settings. Rename or re-color in `client/src/brand.js`. Mobile: `mobile/lib/brand.dart` and `mobile/lib/config.dart` (`API_BASE_URL`, `WEB_BASE_URL` via `--dart-define`).
 

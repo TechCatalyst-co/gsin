@@ -11,7 +11,7 @@ abstract class Brand {
 
   /// Sources the radar sweeps. The live strip replaces this with the API's
   /// `source_count` once it has loaded.
-  static const sourceCount = 34;
+  static const sourceCount = 44;
 
   /// The two scheduled editions, Pacific time.
   static const morningHourPT = 6;

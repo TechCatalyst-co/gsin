@@ -9,7 +9,7 @@ const { normalizeItem, isValid, upsertNewsItems } = require('../utils/ingest');
 const { alertBreaking } = require('../utils/push');
 const DailyBrief = require('../models/DailyBrief');
 
-const SOURCE_COUNT = parseInt(process.env.RADAR_SOURCE_COUNT, 10) || 34;
+const SOURCE_COUNT = parseInt(process.env.RADAR_SOURCE_COUNT, 10) || 44;
 
 const router = express.Router();
 
