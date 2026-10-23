@@ -23,7 +23,7 @@ export default function Login() {
     setBusy(true);
     try {
       const user = await login(form.email, form.password);
-      const dest = user.mustChangePassword ? '/change-password' : (returnTo || loc.state?.from || '/');
+      const dest = user.mustChangePassword ? '/change-password' : (returnTo || loc.state?.from || '/news');
       nav(dest);
     } catch (err) {
       setError(err.message);

@@ -60,3 +60,5 @@ server/.env.staging
 /.vscode
 mobile/android/app/google-services.json
 mobile/ios/Runner/GoogleService-Info.plist
+/client/.impeccable
+client/.impeccable/hook.cache.json

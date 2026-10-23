@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/gsi_api.dart';
@@ -10,6 +9,7 @@ import '../brand.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/fold.dart';
 
 /// Intelligence: two briefs a day. The Morning Briefing (6:50 AM PT)
 /// consolidates the last 24 hours; the Evening Daily Brief (5:25 PM PT) is
@@ -123,8 +123,8 @@ class _IntelligenceScreenState extends State<IntelligenceScreen> {
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Expanded(child: Text('Intelligence', style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1))),
-                if (dates.length > 1 && currentDate != null)
+                Expanded(child: Text('Briefs', style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1))),
+                if (dates.isNotEmpty && currentDate != null)
                   _DayPicker(dates: dates, value: currentDate, label: _dayLabel, onChanged: (d) => _pick(date: d, type: _type ?? 'morning')),
               ]),
               const SizedBox(height: 6),
@@ -199,6 +199,8 @@ class _Editions extends StatelessWidget {
   }
 }
 
+/// The chosen day as a button; tapping it opens a calendar where only days
+/// that have a brief can be picked.
 class _DayPicker extends StatelessWidget {
   const _DayPicker({required this.dates, required this.value, required this.label, required this.onChanged});
   final List<String> dates;
@@ -206,30 +208,48 @@ class _DayPicker extends StatelessWidget {
   final String Function(String) label;
   final ValueChanged<String> onChanged;
 
+  static DateTime _day(String ymd) => DateTime.parse(ymd);
+  static String _ymd(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _open(BuildContext context) async {
+    final available = dates.toSet();
+    final sorted = [...dates]..sort();
+    final current = available.contains(value) ? value : sorted.last;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day(current),
+      firstDate: _day(sorted.first),
+      lastDate: _day(sorted.last),
+      selectableDayPredicate: (d) => available.contains(_ymd(d)),
+      helpText: 'Choose a briefing day',
+    );
+    if (picked != null) onChanged(_ymd(picked));
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final v = dates.contains(value) ? value : dates.first;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(6), border: Border.all(color: p.line)),
-      child: DropdownButton<String>(
-        value: v,
-        isDense: true,
-        underline: const SizedBox.shrink(),
-        icon: Icon(Icons.expand_more, size: 18, color: p.slate),
-        dropdownColor: p.surface,
-        style: display(size: 12.5, weight: FontWeight.w600, color: p.ink),
-        items: [for (final d in dates) DropdownMenuItem(value: d, child: Text(label(d)))],
-        onChanged: (d) {
-          if (d != null) onChanged(d);
-        },
+    return OutlinedButton.icon(
+      onPressed: () => _open(context),
+      icon: Icon(Icons.calendar_today_outlined, size: 16, color: p.ink2),
+      label: Text(label(value), style: display(size: 12.5, weight: FontWeight.w600, color: p.ink)),
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        side: BorderSide(color: p.line),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
     );
   }
 }
 
 /// The dossier: cover, then the sections the edition carries.
+/// The content label that opens each analysis fold.
+Widget _foldLabel(LabelKind kind) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Align(alignment: Alignment.centerLeft, child: LabelChip(kind)),
+    );
+
 class BriefBody extends StatelessWidget {
   const BriefBody({super.key, required this.brief});
   final DailyBrief brief;
@@ -302,9 +322,12 @@ class BriefBody extends StatelessWidget {
         ]),
       ),
 
-      if (brief.watchlistFollowup.isNotEmpty) ...[
-        const SectionHeader('Yesterday’s calls, graded', trailing: LabelChip(LabelKind.analysis)),
-        for (final f in brief.watchlistFollowup)
+      const SizedBox(height: 16),
+      Divider(height: 1, color: p.line),
+      if (brief.watchlistFollowup.isNotEmpty)
+        Fold(title: 'Yesterday’s calls, graded', count: brief.watchlistFollowup.length, children: [
+          _foldLabel(LabelKind.analysis),
+          for (final f in brief.watchlistFollowup)
           _Card(children: [
             GsiChip(f.statusLabel, tier: f.confirmed ? 1 : null),
             const SizedBox(height: 8),
@@ -314,11 +337,13 @@ class BriefBody extends StatelessWidget {
               Text('Evidence: ${f.evidence}', style: reading(size: 13, color: p.slate)),
             ],
           ]),
-      ],
+          const SizedBox(height: 12),
+        ]),
 
-      if (brief.criticalIntelligence.isNotEmpty) ...[
-        const SectionHeader('Critical intelligence', trailing: LabelChip(LabelKind.analysis)),
-        for (final c in brief.criticalIntelligence)
+      if (brief.criticalIntelligence.isNotEmpty)
+        Fold(title: 'Critical intelligence', count: brief.criticalIntelligence.length, children: [
+          _foldLabel(LabelKind.analysis),
+          for (final c in brief.criticalIntelligence)
           _Card(accent: c.high, children: [
             Wrap(spacing: 6, runSpacing: 6, children: [
               GsiChip(c.high ? 'High priority' : 'Medium', tier: c.high ? 1 : null),
@@ -338,11 +363,13 @@ class BriefBody extends StatelessWidget {
               ),
             ],
           ]),
-      ],
+          const SizedBox(height: 12),
+        ]),
 
-      if (brief.emergingTrends.isNotEmpty) ...[
-        const SectionHeader('Emerging trends', trailing: LabelChip(LabelKind.analysis)),
-        for (final t in brief.emergingTrends)
+      if (brief.emergingTrends.isNotEmpty)
+        Fold(title: 'Emerging trends', count: brief.emergingTrends.length, children: [
+          _foldLabel(LabelKind.analysis),
+          for (final t in brief.emergingTrends)
           _Card(children: [
             if (t.domain != null) DomainChip(t.domain),
             if (t.domain != null) const SizedBox(height: 8),
@@ -352,26 +379,28 @@ class BriefBody extends StatelessWidget {
               Text(t.evidence!, style: reading(size: 14, color: p.ink2, height: 1.45)),
             ],
           ]),
-      ],
+          const SizedBox(height: 12),
+        ]),
 
       if (brief.crossDomainInsights.isNotEmpty)
+        Fold(title: 'Cross-domain insights', count: brief.crossDomainInsights.length, children: [
         Container(
-          margin: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
           decoration: BoxDecoration(
             color: p.paperDeep,
             border: Border(left: BorderSide(color: p.gold, width: 2)),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('✦  CROSS-DOMAIN INSIGHTS', style: display(size: 10.5, weight: FontWeight.w700, color: p.gold, letterSpacing: 1.3)),
-            const SizedBox(height: 8),
             for (final s in brief.crossDomainInsights) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(s, style: body)),
           ]),
         ),
+        ]),
 
-      if (brief.forwardWatchlist.isNotEmpty) ...[
-        const SectionHeader('Watchlist, next 24 to 72 hours', trailing: LabelChip(LabelKind.forecast)),
-        for (final w in brief.forwardWatchlist) ForecastCard(forecast: w),
+      if (brief.forwardWatchlist.isNotEmpty)
+        Fold(title: 'Watchlist, next 24 to 72 hours', count: brief.forwardWatchlist.length, children: [
+          _foldLabel(LabelKind.forecast),
+          for (final w in brief.forwardWatchlist) ForecastCard(forecast: w),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
           child: InkWell(
@@ -380,14 +409,17 @@ class BriefBody extends StatelessWidget {
                 style: reading(size: 12.5, color: p.slate)),
           ),
         ),
-      ],
+          const SizedBox(height: 14),
+        ]),
 
       if (brief.items.isNotEmpty) ...[
-        const SectionHeader('Stories in this brief', trailing: LabelChip(LabelKind.reporting)),
-        for (var i = 0; i < brief.items.length; i++) ...[
-          _BriefRow(n: i + 1, item: brief.items[i]),
-          if (i == 2 && brief.items.length > 4) const AdSlot(AdPlacement.briefInline),
-        ],
+        SectionHeader('Stories in this brief · ${brief.items.length}', trailing: const LabelChip(LabelKind.reporting)),
+        TopicGroups<BriefItem>(
+          items: brief.items,
+          category: (i) => i.category,
+          title: (i) => i.title,
+          itemBuilder: (i, n) => _BriefRow(n: n + 1, item: i),
+        ),
       ],
     ]);
   }
@@ -486,12 +518,7 @@ class _BriefRow extends StatelessWidget {
           SizedBox(width: 30, child: Text('$n', style: figures(size: 18, color: p.signal, weight: FontWeight.w700, height: 1.1))),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Wrap(spacing: 6, runSpacing: 6, children: [
-                if (tier != null) TierChip(tier),
-                DomainChip(item.category),
-                if (item.primarySource) const GsiChip('Verified source', verified: true),
-              ]),
-              const SizedBox(height: 7),
+              if (tier == 1) ...[const TierChip(1, long: true), const SizedBox(height: 7)],
               Text(item.title, style: display(size: 15.5, weight: FontWeight.w600, color: p.ink, height: 1.22)),
               if (item.headline != null && item.headline != item.title) ...[
                 const SizedBox(height: 4),
@@ -509,7 +536,6 @@ class _BriefRow extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Row(children: [
                   if (item.source != null) Text(item.source!, style: reading(size: 12.5, color: p.slate)),
-                  if (item.signalScore != null) ...[const SizedBox(width: 10), SignalMeter(score: item.signalScore!, tier: tier ?? 3)],
                   const Spacer(),
                   if (item.slug != null && item.commentCount > 0) Text('${item.commentCount} comments', style: reading(size: 12.5, color: p.slate)),
                 ]),

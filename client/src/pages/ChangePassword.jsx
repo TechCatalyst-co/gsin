@@ -18,7 +18,7 @@ export default function ChangePassword() {
     setError('');
     try {
       await changePassword(form.currentPassword, form.newPassword);
-      nav('/', { replace: true });
+      nav('/news', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

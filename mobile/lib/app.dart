@@ -13,7 +13,6 @@ import 'screens/change_password_screen.dart';
 import 'screens/intelligence_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/newsroom_screen.dart';
-import 'screens/radar_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/saved_screen.dart';
 import 'screens/signal_screen.dart';
@@ -23,7 +22,6 @@ import 'screens/topics_screen.dart';
 import 'screens/watchlist_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/common.dart';
-import 'widgets/radar_strip.dart';
 
 class GsinApp extends StatefulWidget {
   const GsinApp({super.key, required this.auth, required this.push, required this.theme});
@@ -160,11 +158,12 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       ),
       GoRoute(path: '/saved', builder: (context, state) => Scaffold(appBar: AppBar(title: const Text('Saved')), body: const SavedScreen())),
       GoRoute(path: '/newsroom', builder: (context, state) => const NewsroomScreen()),
+      // Radar folded into News; old links land there.
+      GoRoute(path: '/radar', redirect: (context, state) => '/'),
       ShellRoute(
         builder: (context, state, child) => _HomeShell(location: state.matchedLocation, child: child),
         routes: [
           GoRoute(path: '/', pageBuilder: (context, state) => _tab(state, const SignalScreen())),
-          GoRoute(path: '/radar', pageBuilder: (context, state) => _tab(state, const RadarScreen())),
           GoRoute(path: '/intelligence', pageBuilder: (context, state) => _tab(state, const IntelligenceScreen())),
           GoRoute(path: '/watchlist', pageBuilder: (context, state) => _tab(state, const WatchlistScreen())),
           GoRoute(path: '/account', pageBuilder: (context, state) => _tab(state, const AccountScreen())),
@@ -197,9 +196,8 @@ class _HomeShell extends StatelessWidget {
   final Widget child;
 
   static const _tabs = [
-    (path: '/', icon: Icons.graphic_eq, active: Icons.graphic_eq, label: 'Signal'),
-    (path: '/radar', icon: Icons.radar, active: Icons.radar, label: 'Radar'),
-    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Intel'),
+    (path: '/', icon: Icons.article_outlined, active: Icons.article, label: 'News'),
+    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Briefs'),
     (path: '/watchlist', icon: Icons.schedule_outlined, active: Icons.schedule, label: 'Watchlist'),
     (path: '/account', icon: Icons.person_outline, active: Icons.person, label: 'Account'),
   ];
@@ -225,10 +223,7 @@ class _HomeShell extends StatelessWidget {
           IconButton(tooltip: 'Search', icon: const Icon(Icons.search), onPressed: () => context.push('/search')),
         ],
       ),
-      body: Column(children: [
-        const RadarStrip(),
-        Expanded(child: child),
-      ]),
+      body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => context.go(_tabs[i].path),

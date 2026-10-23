@@ -16,6 +16,12 @@ export const OPERATOR = {
   website: 'https://www.techcatalyst.co',
 };
 
+// Store listings for the mobile app. A null link shows as "coming soon".
+export const APP_STORES = {
+  ios: 'https://apps.apple.com/us/app/global-super-intelligence-news/id6824711002',
+  android: null,
+};
+
 // Bump when the Privacy Policy or Terms change.
 export const LEGAL_UPDATED = 'October 16, 2026';
 
@@ -61,9 +67,7 @@ export const TIER_MEANING = {
 
 // Site sections (the primary navigation).
 export const NAV = [
-  { to: '/', label: 'News', end: true },
-  { to: '/intelligence', label: 'Intel' },
-  { to: '/topic/defense-national-security', label: 'Defense' },
-  { to: '/research', label: 'Research' },
+  { to: '/news', label: 'News' },
+  { to: '/intelligence', label: 'Briefs' },
   { to: '/watchlist', label: 'Watchlist' },
 ];

@@ -18,7 +18,7 @@ export default function Footer() {
         <nav aria-label="More">
           <h2 className="footer-head">More</h2>
           <ul>
-            <li><Link to="/newsroom">Newsroom</Link></li>
+            <li><Link to="/news">Newsroom</Link></li>
             <li><Link to="/brief">Daily Brief</Link></li>
             <li><a href="/api/v1/public/rss">RSS feed</a></li>
             <li><Link to="/privacy">Privacy</Link></li>

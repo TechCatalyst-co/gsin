@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND, CATEGORIES } from '../brand';
 import { useDocumentTitle } from './Home';
 
 export default function Account() {
-  const { user, refresh } = useAuth();
+  const { user, refresh, logout } = useAuth();
+  const nav = useNavigate();
   const [topics, setTopics] = useState(user?.followedCategories || []);
   const [status, setStatus] = useState('');
   useDocumentTitle(`Account — ${BRAND.short}`);
@@ -69,7 +70,9 @@ export default function Account() {
       {status && <p className="muted small" role="status">{status}</p>}
 
       <div className="actions-row">
+        <Link to="/saved" className="btn ghost">Saved stories</Link>
         <Link to="/change-password" className="btn ghost">Change password</Link>
+        <button className="btn ghost" onClick={async () => { await logout(); nav('/'); }}>Sign out</button>
       </div>
       <p className="muted small"><Link to="/delete-account">Request account deletion</Link></p>
     </div>

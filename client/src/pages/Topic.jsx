@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { BRAND, categoryFromSlug, categoryMeta } from '../brand';
 import { StoryList } from '../components/Story';
-import { useDocumentTitle } from './Home';
+import { TopicBar, useDocumentTitle } from './Home';
 
 const SORTS = [
   { key: 'signal', label: 'Strongest signal' },
@@ -12,7 +12,7 @@ const SORTS = [
 ];
 
 // Shared by /topic/:slug and /search — both are a filtered feed.
-export function FeedPage({ title, intro, query }) {
+export function FeedPage({ title, intro, query, topics = false }) {
   const [params, setParams] = useSearchParams();
   const sort = params.get('sort') || 'signal';
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -41,6 +41,7 @@ export function FeedPage({ title, intro, query }) {
 
   return (
     <div className="shell feed">
+      {topics && <TopicBar />}
       <header className="feed-head">
         <h1>{title}</h1>
         {intro && <p className="feed-intro">{intro}</p>}
@@ -82,6 +83,7 @@ export default function Topic() {
       title={<><span className="cat-dot cat-dot--lg" style={{ background: meta.hue }} aria-hidden="true" />{meta.name}</>}
       intro={<span className="feed-links"><a href={`/api/v1/public/rss?category=${encodeURIComponent(meta.name)}`}>RSS for this topic</a><Link to="/account">Follow topics</Link></span>}
       query={{ category: meta.name }}
+      topics
     />
   );
 }
@@ -109,5 +111,5 @@ export function Search() {
 const RESEARCH_DESKS = ['Frontier Models & AGI', 'AI Safety & Alignment', 'Medical & Life Sciences', 'Open Source & Developer Tools'];
 export function Research() {
   useDocumentTitle(`Research — ${BRAND.name}`);
-  return <FeedPage title="Research" intro="Frontier releases, capability thresholds, safety and alignment work, and the papers behind the claims." query={{ domain: RESEARCH_DESKS }} />;
+  return <FeedPage title="Research" intro="Frontier releases, capability thresholds, safety and alignment work, and the papers behind the claims." query={{ domain: RESEARCH_DESKS }} topics />;
 }
