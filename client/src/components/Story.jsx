@@ -8,8 +8,8 @@ import { isSafeHttpUrl } from '../url';
 const isBreaking = (item) => item.urgencyTier === 1 || item.urgent;
 
 // One line under every headline: breaking flag, desk, source, age, comments.
-function Meta({ item }) {
-  const desk = item.category ? categoryMeta(item.category) : null;
+function Meta({ item, showCategory = true }) {
+  const desk = showCategory && item.category ? categoryMeta(item.category) : null;
   return (
     <div className="meta">
       {isBreaking(item) && <span className="flag-breaking">Breaking</span>}
@@ -55,7 +55,7 @@ export function StoryRow({ item, showCategory = true, compact = false }) {
           <Link to={storyPath(item)}>{item.title}</Link>
         </h3>
         {!compact && (item.impact || item.headline || item.summary) && <p className="row-dek">{item.impact || item.headline || item.summary}</p>}
-        <Meta item={item} />
+        <Meta item={item} showCategory={showCategory} />
       </div>
       {!compact && item.imageUrl && (
         <Link to={storyPath(item)} className="row-thumb" tabIndex={-1} aria-hidden="true">

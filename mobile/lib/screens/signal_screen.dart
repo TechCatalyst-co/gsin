@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../ads.dart';
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/gsi_api.dart';
@@ -11,6 +10,7 @@ import '../brand.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/fold.dart';
 import '../widgets/radar_strip.dart';
 
 /// News: the home tab. Topic filter, the lead story with the latest brief under
@@ -108,18 +108,24 @@ class _SignalScreenState extends State<SignalScreen> {
               Divider(color: p.line),
             ],
             SectionHeader(
-              _filter == null ? 'Latest' : domainShort(_filter),
+              _filter == null ? 'By topic' : domainShort(_filter),
               caption: items.isNotEmpty ? 'last seven days, strongest first' : 'latest from the wire',
             ),
             if (rest.isEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 child: Text('Nothing from this desk cleared the bar this week.', style: reading(size: 14, color: p.slate)),
+              )
+            // One desk picked: a plain list. All desks: one fold per desk.
+            else if (_filter != null)
+              for (final it in rest) StoryTile(item: it, showCategory: false)
+            else
+              TopicGroups<NewsItem>(
+                items: rest,
+                category: (i) => i.category,
+                title: (i) => i.title,
+                itemBuilder: (i, _) => StoryTile(item: i, showCategory: false),
               ),
-            for (var n = 0; n < rest.length; n++) ...[
-              StoryTile(item: rest[n], showCategory: _filter == null),
-              if ((n + 1) % 6 == 0 && n < rest.length - 1) const AdSlot(AdPlacement.homeFeed),
-            ],
             Padding(
               padding: const EdgeInsets.all(16),
               child: OutlinedButton(onPressed: () => context.push('/search'), child: const Text('Browse all stories')),

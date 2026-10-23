@@ -625,6 +625,28 @@ a.chip:hover { color: var(--ink); border-color: var(--line-strong); }
 .confring-lab { font-family: var(--read); font-weight: 500; font-size: 9px; fill: var(--slate); }
 .dossier-top .confring-num { fill: #F8FAFC; } .dossier-top .confring-lab { fill: #8FA3C2; }
 .intel-section { margin: 26px 0; }
+/* collapsible sections: one row closed, a teaser line while closed */
+.folds, .dossier + .fold { border-top: 1px solid var(--line); }
+.fold { border-bottom: 1px solid var(--line); }
+.fold-head {
+  display: grid; grid-template-columns: 14px minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 2px;
+  padding: 14px 4px; cursor: pointer; list-style: none;
+}
+.fold-head::-webkit-details-marker { display: none; }
+.fold-head:hover .fold-title { color: var(--link); }
+.fold-chev { color: var(--slate); transition: transform .2s ease; }
+.fold[open] > .fold-head .fold-chev { transform: rotate(90deg); }
+.fold-title { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--ink); }
+.fold-count { font-family: var(--read); font-weight: 500; font-size: 13px; color: var(--slate); font-variant-numeric: tabular-nums; }
+.fold-teaser { grid-column: 2; font-size: 14px; color: var(--slate); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold[open] > .fold-head .fold-teaser { display: none; }
+.fold-body { padding: 0 0 16px 24px; }
+.fold-body > .chip.label { margin-bottom: 10px; }
+.fold-body .rows .row:last-child { border-bottom: 0; }
+.fold-more { margin-top: 8px; background: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 14px; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.fold-more:hover { border-color: var(--ink-2); }
+.intel-section > h2 .fold-count { font-size: 14px; }
+@media (max-width: 760px) { .fold-body { padding-left: 0; } }
 .intel-section h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; margin-bottom: 10px; }
 .cards2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }

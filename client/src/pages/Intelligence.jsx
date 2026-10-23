@@ -1,11 +1,11 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { BRAND, domainShort } from '../brand';
 import { LabelChip } from '../components/Chips';
 import { ConfidenceRing } from '../components/Signal';
-import AdSlot from '../components/AdSlot';
 import BriefCalendar from '../components/BriefCalendar';
+import { Fold, TopicGroups } from '../components/Fold';
 import { useDocumentTitle } from './Home';
 
 const isEvening = (b) => b?.briefType === 'evening';
@@ -89,8 +89,8 @@ function BriefBody({ brief }) {
       </section>
 
       {brief.watchlistFollowup?.length > 0 && (
-        <section className="intel-section" aria-labelledby="fu-h">
-          <h2 id="fu-h">Yesterday’s calls, graded <LabelChip kind="analysis" /></h2>
+        <Fold title={'Yesterday’s calls, graded'} count={brief.watchlistFollowup.length}>
+          <LabelChip kind="analysis" />
           <div className="cards2">
             {brief.watchlistFollowup.map((f, i) => (
               <div key={i} className="card">
@@ -100,12 +100,12 @@ function BriefBody({ brief }) {
               </div>
             ))}
           </div>
-        </section>
+        </Fold>
       )}
 
       {brief.criticalIntelligence?.length > 0 && (
-        <section className="intel-section" aria-labelledby="crit-h">
-          <h2 id="crit-h">Critical intelligence <LabelChip kind="analysis" /></h2>
+        <Fold title={'Critical intelligence'} count={brief.criticalIntelligence.length}>
+          <LabelChip kind="analysis" />
           {brief.criticalIntelligence.map((c, i) => (
             <div key={i} className={`card${c.priority === 'HIGH' ? ' hi' : ''}`} style={{ marginBottom: 10 }}>
               <div className="chips">
@@ -117,12 +117,12 @@ function BriefBody({ brief }) {
               {c.url && <a href={c.url} target="_blank" rel="noopener noreferrer" className="small">Read the original source ↗</a>}
             </div>
           ))}
-        </section>
+        </Fold>
       )}
 
       {brief.emergingTrends?.length > 0 && (
-        <section className="intel-section" aria-labelledby="tr-h">
-          <h2 id="tr-h">Emerging trends <LabelChip kind="analysis" /></h2>
+        <Fold title={'Emerging trends'} count={brief.emergingTrends.length}>
+          <LabelChip kind="analysis" />
           <div className="cards2">
             {brief.emergingTrends.map((t, i) => (
               <div key={i} className="card">
@@ -132,19 +132,20 @@ function BriefBody({ brief }) {
               </div>
             ))}
           </div>
-        </section>
+        </Fold>
       )}
 
       {brief.crossDomainInsights?.length > 0 && (
-        <section className="insight" aria-label="Cross-domain insights">
-          <div className="kicker">✦&nbsp;&nbsp;CROSS-DOMAIN INSIGHTS</div>
-          {brief.crossDomainInsights.map((s, i) => <p key={i}>{s}</p>)}
-        </section>
+        <Fold title="Cross-domain insights" count={brief.crossDomainInsights.length}>
+          <section className="insight">
+            {brief.crossDomainInsights.map((s, i) => <p key={i}>{s}</p>)}
+          </section>
+        </Fold>
       )}
 
       {brief.forwardWatchlist?.length > 0 && (
-        <section className="intel-section" aria-labelledby="fw-h">
-          <h2 id="fw-h">Watchlist, next 24 to 72 hours <LabelChip kind="forecast" /></h2>
+        <Fold title={'Watchlist, next 24 to 72 hours'} count={brief.forwardWatchlist.length}>
+          <LabelChip kind="forecast" />
           {brief.forwardWatchlist.map((w, i) => (
             <div key={i} className="forecast">
               <div className="fc-top"><span className="chip">Next {w.window || '72h'}</span></div>
@@ -153,35 +154,34 @@ function BriefBody({ brief }) {
             </div>
           ))}
           <p className="muted small">The analyst grades these against the next day’s events. <Link to="/watchlist">The full watchlist</Link>.</p>
-        </section>
+        </Fold>
       )}
 
       {brief.items?.length > 0 && (
         <section className="intel-section" aria-labelledby="items-h">
-          <h2 id="items-h">Stories in this brief <LabelChip kind="reporting" /></h2>
-          <ol className="brief-items">
-            {brief.items.map((i, n) => (
-              <Fragment key={i.url}>
-                <li className="brief-item">
-                  <div className="brief-item-top chips">
-                    {i.urgencyTier && <span className={`chip t${i.urgencyTier}`}>T{i.urgencyTier}</span>}
-                    {i.category && <span className="chip">{domainShort(i.category)}</span>}
-                    {i.primarySource && <span className="chip ver">Verified primary source</span>}
-                  </div>
-                  <h3>
-                    {i.slug ? <Link to={`/story/${i.slug}`}>{i.title}</Link> : <a href={i.url} target="_blank" rel="noopener noreferrer">{i.title}</a>}
-                  </h3>
-                  {i.headline && i.headline !== i.title && <p className="brief-item-dek">{i.headline}</p>}
-                  {i.impact && <p className="brief-item-why"><strong>Why it matters.</strong> {i.impact}</p>}
-                  {i.industryLine && <p className="brief-item-why muted">{i.industryLine}</p>}
-                  {i.slug && i.commentCount > 0 && <Link className="small" to={`/story/${i.slug}#disc`}>{i.commentCount} comments</Link>}
-                </li>
-                {n === 2 && brief.items.length > 4 && <li className="brief-ad"><AdSlot placement="brief-inline" /></li>}
-              </Fragment>
-            ))}
-          </ol>
+          <h2 id="items-h">Stories in this brief <span className="fold-count">{brief.items.length}</span> <LabelChip kind="reporting" /></h2>
+          <TopicGroups items={brief.items} render={(xs) => <BriefItems items={xs} />} />
         </section>
       )}
     </>
+  );
+}
+
+// One topic's stories in a brief: headline, dek and why it matters.
+function BriefItems({ items }) {
+  return (
+    <ol className="brief-items">
+      {items.map((i) => (
+        <li key={i.url} className="brief-item">
+          {i.urgencyTier === 1 && <div className="brief-item-top"><span className="flag-breaking">Breaking</span></div>}
+          <h3>
+            {i.slug ? <Link to={`/story/${i.slug}`}>{i.title}</Link> : <a href={i.url} target="_blank" rel="noopener noreferrer">{i.title}</a>}
+          </h3>
+          {i.headline && i.headline !== i.title && <p className="brief-item-dek">{i.headline}</p>}
+          {i.impact && <p className="brief-item-why"><strong>Why it matters.</strong> {i.impact}</p>}
+          {i.slug && i.commentCount > 0 && <Link className="small" to={`/story/${i.slug}#disc`}>{i.commentCount} comments</Link>}
+        </li>
+      ))}
+    </ol>
   );
 }

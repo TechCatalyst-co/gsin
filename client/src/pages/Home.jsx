@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { BRAND, CATEGORIES } from '../brand';
 import { StoryLead, StoryList } from '../components/Story';
+import { TopicGroups } from '../components/Fold';
 import { storyPath } from '../format';
 
 function useDocumentTitle(title) {
@@ -55,8 +56,8 @@ export default function Home() {
           <StoryLead item={lead} />
           <div className="front">
             <section className="front-main" aria-labelledby="latest-h">
-              <h2 id="latest-h" className="section-h">Latest <small>the last seven days, strongest first</small></h2>
-              <StoryList items={rest} adEvery={6} adPlacement="home-feed" />
+              <h2 id="latest-h" className="section-h">By topic <small>the last seven days, strongest first</small></h2>
+              <TopicGroups items={rest} render={(xs) => <StoryList items={xs} showCategory={false} />} />
               <Link to="/search" className="more-link">Browse all stories</Link>
             </section>
 
