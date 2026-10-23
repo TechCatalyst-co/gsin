@@ -134,7 +134,7 @@ export default function BootScreen() {
           {lines === 0 && <div className="boot-ln"><span className="ts">{stamp(0)}</span><i className="cur" /></div>}
         </div>
         <div className="boot-bar"><i /></div>
-        <div className="boot-caption"><span>34 sources  /  every 30 minutes  /  primary sources first</span><span>v2.0</span></div>
+        <div className="boot-caption"><span>34 sources  /  every 30 minutes  /  primary sources first</span><span>v2.0.1</span></div>
       </div>
     </div>
   );
