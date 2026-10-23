@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
-import { BRAND, CATEGORIES, categoryMeta } from '../brand';
+import { APP_STORES, BRAND, categoryMeta } from '../brand';
 import { storyPath } from '../format';
 import { useDocumentTitle } from './Home';
 
@@ -37,6 +37,22 @@ function Arrow() {
   );
 }
 
+function AppleLogo() {
+  return (
+    <svg width="22" height="26" viewBox="0 0 384 512" aria-hidden="true">
+      <path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+    </svg>
+  );
+}
+
+function PlayLogo() {
+  return (
+    <svg width="22" height="24" viewBox="0 0 512 512" aria-hidden="true">
+      <path fill="currentColor" d="M325.3 234.3 104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
+    </svg>
+  );
+}
+
 export default function Landing() {
   const { user } = useAuth();
   const [wire, setWire] = useState(null);
@@ -44,8 +60,6 @@ export default function Landing() {
   const [wireError, setWireError] = useState(false);
   const [checkedAt, setCheckedAt] = useState(null);
   const [entering, setEntering] = useState(true);
-  const [counts, setCounts] = useState({});
-  const [brief, setBrief] = useState(undefined);
   const known = useRef(null);
   useDocumentTitle(`${BRAND.short} — ${BRAND.name}`);
 
@@ -76,43 +90,19 @@ export default function Landing() {
     return () => clearTimeout(id);
   }, [wire === null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    api('/news/categories')
-      .then((d) => setCounts(Object.fromEntries((d.categories || []).map((c) => [c.category, c.count]))))
-      .catch(() => {});
-    api('/daily-brief/latest').then((d) => setBrief(d.brief || null)).catch(() => setBrief(null));
-  }, []);
-
   return (
     <div className="ld">
       <section className="ld-hero" aria-labelledby="ld-title">
-        <header className="ld-bar shell">
-          <Link to="/" className="ld-bar-brand" aria-label={`${BRAND.name} home`}>{BRAND.short}</Link>
-          <nav className="ld-bar-nav" aria-label="Primary">
-            <Link to="/newsroom">Newsroom</Link>
-            <Link to="/brief">Daily Brief</Link>
-            {user ? <Link to="/account">Account</Link> : <Link to="/login">Sign in</Link>}
-          </nav>
-        </header>
-
         <div className="ld-hero-grid shell">
           <div className="ld-pitch">
+            {/* The lockup's lettering is white, which works because the hero is always ink. */}
             <h1 id="ld-title" className="ld-lockup">
-              <svg className="ld-curve" viewBox="0 0 32 32" aria-hidden="true">
-                <path d="M4 28 H28" className="ld-curve-axis" />
-                <path d="M4 27 C14 27 20 25 24 16 C26 11 27 7 27.5 3" className="ld-curve-line" pathLength="1" />
-                <circle cx="27.5" cy="3.5" r="2.4" className="ld-curve-dot" />
-              </svg>
-              {/* Two balanced lines: "Global Super" / "Intelligence News" */}
-              <span className="ld-name">
-                <span>{BRAND.name.split(' ').slice(0, 2).join(' ')}</span>
-                <span>{BRAND.name.split(' ').slice(2).join(' ')}</span>
-              </span>
+              <img src="/gsi-lockup-transparent.png" alt={BRAND.name} width="1309" height="782" />
             </h1>
             <p className="ld-promise"><abbr title={BRAND.name}>{BRAND.short}</abbr> is the world’s wire for artificial intelligence and the road to superintelligence. Summarized, curated, free all day.</p>
             <div className="ld-actions">
-              <Link to="/newsroom" className="ld-btn ld-btn--primary">Enter the newsroom <Arrow /></Link>
-              <Link to="/brief" className="ld-btn ld-btn--quiet">Read today’s brief</Link>
+              <Link to="/news" className="ld-btn ld-btn--primary">Enter the newsroom <Arrow /></Link>
+              <a href="#app" className="ld-btn ld-btn--quiet">Get the app</a>
             </div>
           </div>
 
@@ -134,7 +124,7 @@ export default function Landing() {
               <div className="ld-wire-empty">
                 <p className="ld-wire-empty-h">{wireError ? 'The wire didn’t answer.' : 'The wire is quiet.'}</p>
                 <p>{wireError ? 'We couldn’t load the latest stories just now. The newsroom may still have them.' : 'New stories appear here within a minute of arriving.'}</p>
-                <Link to="/newsroom">Open the newsroom</Link>
+                <Link to="/news">Open the newsroom</Link>
               </div>
             ) : (
               <ol className={`ld-wire-list${entering ? ' is-entering' : ''}`}>
@@ -153,69 +143,35 @@ export default function Landing() {
                 })}
               </ol>
             )}
-            {wire?.length > 0 && <Link to="/newsroom" className="ld-wire-more">Every story in the newsroom <Arrow /></Link>}
+            {wire?.length > 0 && <Link to="/news" className="ld-wire-more">Every story in the newsroom <Arrow /></Link>}
           </section>
         </div>
       </section>
 
-      <section className="ld-desks" aria-labelledby="ld-desks-h">
-        <div className="shell ld-desks-grid">
-          <div className="ld-desks-intro">
-            <h2 id="ld-desks-h">Nine desks.<br />One wire.</h2>
-            <p>From frontier model launches to chip fabs and alignment research, every story is filed to the desk that covers it. Follow the ones you care about.</p>
-          </div>
-          <ul className="ld-desk-index">
-            {CATEGORIES.map((c) => {
-              const count = counts[c.name];
-              return (
-                <li key={c.slug}>
-                  <Link to={`/topic/${c.slug}`} className="ld-desk-link">
-                    <span className="ld-desk-name"><span className="cat-dot" style={{ background: c.hue }} aria-hidden="true" />{c.name}</span>
-                    {count > 0 && <span className="ld-desk-count">{count.toLocaleString()} {count === 1 ? 'story' : 'stories'}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
-      <section className="ld-brief" aria-labelledby="ld-brief-h">
-        <div className="shell ld-brief-grid">
+      <section className="ld-app" id="app" aria-labelledby="ld-app-h">
+        <div className="shell ld-app-grid">
           <div>
-            <h2 id="ld-brief-h">The Daily Brief</h2>
-            {brief?.briefingDateLabel && <p className="ld-brief-date">{brief.briefingDateLabel}</p>}
-            {brief?.summary
-              ? <p className="ld-brief-summary">{brief.summary}</p>
-              : <p className="ld-brief-summary">Every morning: the stories that moved AI forward, why they matter, and what to watch next.</p>}
-            {brief?.items?.length > 0 && (
-              <ol className="ld-brief-items">
-                {brief.items.slice(0, 3).map((i) => (
-                  <li key={i.url}>
-                    {i.slug ? <Link to={`/story/${i.slug}`}>{i.title}</Link> : <a href={i.url} target="_blank" rel="noopener noreferrer">{i.title}</a>}
-                  </li>
-                ))}
-              </ol>
-            )}
+            <h2 id="ld-app-h">Take the wire with you.</h2>
+            <p>The {BRAND.name} app puts every desk, the daily intelligence brief and breaking alerts in your pocket. Free, like everything here.</p>
+            <div className="ld-stores">
+              <a href={APP_STORES.ios} className="ld-store" target="_blank" rel="noopener noreferrer">
+                <AppleLogo />
+                <span><small>Download on the</small>App Store</span>
+              </a>
+              {APP_STORES.android ? (
+                <a href={APP_STORES.android} className="ld-store" target="_blank" rel="noopener noreferrer">
+                  <PlayLogo />
+                  <span><small>Get it on</small>Google Play</span>
+                </a>
+              ) : (
+                <span className="ld-store is-soon" aria-label="Google Play, coming soon">
+                  <PlayLogo />
+                  <span><small>Coming soon to</small>Google Play</span>
+                </span>
+              )}
+            </div>
           </div>
-          <aside className="ld-brief-act">
-            <Link to="/brief" className="ld-btn ld-btn--primary">{brief ? 'Read today’s brief' : 'Open the Daily Brief'} <Arrow /></Link>
-            {user ? (
-              <p>Your brief arrives by email each morning. Change that any time in <Link to="/account">your account</Link>.</p>
-            ) : (
-              <p><Link to="/register">Create a free account</Link> and the brief lands in your inbox every morning. You can turn the email off any time.</p>
-            )}
-          </aside>
-        </div>
-      </section>
-
-      <section className="ld-close" aria-labelledby="ld-close-h">
-        <div className="shell ld-close-grid">
-          <h2 id="ld-close-h">Every story, every desk, free.</h2>
-          <div>
-            <p>Our automated newsroom reads lab blogs, arXiv and the policy wires, summarizes each story with why it matters, and editors curate what makes the front page. No paywall, no premium tier. Always check the original source; we link it on every story.</p>
-            <Link to="/newsroom" className="ld-btn ld-btn--ink">Enter the newsroom <Arrow /></Link>
-          </div>
+          <img className="ld-app-icon" src="/gsi-icon-1024-navy.png" alt="" width="200" height="200" loading="lazy" />
         </div>
       </section>
     </div>

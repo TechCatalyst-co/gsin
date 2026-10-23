@@ -8,7 +8,6 @@ import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/gsi_api.dart';
 import '../auth/auth_state.dart';
-import '../brand.dart';
 import '../config.dart' show webBaseUrl;
 import '../models/comment.dart';
 import '../models/news_item.dart';
@@ -155,14 +154,6 @@ class _StoryBody extends StatelessWidget {
   final NewsItem item;
   final List<NewsItem> captures;
 
-  void _openGrading(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => SingleChildScrollView(child: GradingPanel(item: item)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -173,7 +164,10 @@ class _StoryBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ItemChips(item: item, tappableDomain: true),
+          Wrap(spacing: 8, runSpacing: 6, children: [
+            if (item.tier == 1 && (item.graded || item.urgent)) const TierChip(1, long: true),
+            DomainChip(item.category, tappable: true),
+          ]),
           const SizedBox(height: 12),
           Text(item.title, style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1.12, letterSpacing: -0.3)),
           if (dek != null) ...[
@@ -182,22 +176,9 @@ class _StoryBody extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           Text(
-            '${item.author != null ? '${item.author}, ' : ''}${item.source}   ·   ${timeAgo(item.published)}${item.geo != null ? '   ·   ${item.geo}' : ''}',
+            '${item.author != null ? '${item.author}, ' : ''}${item.source}   ·   ${timeAgo(item.published)}',
             style: reading(size: 13, color: p.slate),
           ),
-          if (item.graded) ...[
-            const SizedBox(height: 14),
-            InstrumentStrip(item: item),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _openGrading(context),
-                icon: const Icon(Icons.tune, size: 16),
-                label: const Text('How this was graded'),
-              ),
-            ),
-          ],
           if (item.industryLine != null && item.industryLine!.isNotEmpty) ...[
             const SizedBox(height: 6),
             PlainEnglish(text: item.industryLine!),
@@ -261,10 +242,9 @@ class _StoryBody extends StatelessWidget {
               ]),
             ),
           ],
-          if (item.entities.isNotEmpty || item.tags.isNotEmpty) ...[
+          if (item.tags.isNotEmpty) ...[
             const SizedBox(height: 16),
             Wrap(spacing: 6, runSpacing: 6, children: [
-              for (final e in item.entities) GsiChip(e),
               for (final t in item.tags)
                 InkWell(
                   onTap: () => context.push('/search?tag=${Uri.encodeComponent(t)}'),
@@ -278,7 +258,7 @@ class _StoryBody extends StatelessWidget {
   }
 }
 
-/// The source, sealed: primary or reported, with the link out.
+/// The source in one line, with the link out.
 class _VerifiedBlock extends StatelessWidget {
   const _VerifiedBlock({required this.item});
   final NewsItem item;
@@ -286,39 +266,22 @@ class _VerifiedBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final verified = item.primarySource;
-    final host = Uri.tryParse(item.url)?.host.replaceFirst('www.', '') ?? '';
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: verified ? p.signal.withValues(alpha: 0.6) : p.line),
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Divider(color: p.line),
+      const SizedBox(height: 6),
+      Text(
+        '${item.primarySource ? 'Verified primary source' : 'Reported by'}: ${item.source}.${item.graded ? ' Summary lines are AI-generated.' : ''}',
+        style: reading(size: 13, color: p.slate, height: 1.4),
       ),
-      child: Row(children: [
-        Icon(verified ? Icons.verified_outlined : Icons.description_outlined, size: 28, color: verified ? p.signal : p.slate),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(verified ? 'Verified primary source' : 'Reported', style: display(size: 13.5, weight: FontWeight.w700, color: p.ink)),
-            const SizedBox(height: 2),
-            Text(
-              verified ? '${item.source} published this itself.${host.isNotEmpty ? ' $host' : ''}' : 'Coverage by ${item.source}.${host.isNotEmpty ? ' $host' : ''}',
-              style: reading(size: 12.5, color: p.slate, height: 1.35),
-            ),
-          ]),
+      if (isSafeHttpUrl(item.url)) ...[
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => openExternal(item.url),
+          icon: const Icon(Icons.open_in_new, size: 16),
+          label: const Text('Read the original source'),
         ),
-        if (isSafeHttpUrl(item.url)) ...[
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: () => openExternal(item.url),
-            icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('Open'),
-            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-          ),
-        ],
-      ]),
-    );
+      ],
+    ]);
   }
 }
 
@@ -343,60 +306,6 @@ class _CaptureLine extends StatelessWidget {
             ]),
           ),
           if (item.primarySource) Icon(Icons.verified_outlined, size: 14, color: p.signal),
-        ]),
-      ),
-    );
-  }
-}
-
-/// The pull-up grading panel: tier, score, the readings behind it, direction,
-/// horizon, and the rubric line for the tier.
-class GradingPanel extends StatelessWidget {
-  const GradingPanel({super.key, required this.item});
-  final NewsItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final tier = item.tier;
-    Widget row(String k, String v, {Color? color}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          child: Row(children: [
-            SizedBox(width: 120, child: Text(k, style: display(size: 11, weight: FontWeight.w600, color: p.slate, letterSpacing: 0.5))),
-            Expanded(child: Text(v, style: reading(size: 14.5, color: color ?? p.ink, weight: FontWeight.w500, height: 1.35))),
-          ]),
-        );
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            SignalGauge(score: item.signalScore ?? 0, size: 64),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Tier $tier · ${tierName[tier] ?? ''}', style: display(size: 18, weight: FontWeight.w700, color: p.ink)),
-                const SizedBox(height: 4),
-                Text(tierMeaning[tier] ?? '', style: reading(size: 13, color: p.ink2, height: 1.4)),
-              ]),
-            ),
-          ]),
-          const SizedBox(height: 14),
-          Divider(color: p.line),
-          const SizedBox(height: 6),
-          row('SIGNAL SCORE', '${item.signalScore ?? '—'} of 100 — relevance × freshness × primary source × corroboration'),
-          if (item.relevance != null) row('RELEVANCE', '${item.relevance} of 100'),
-          row('FRESHNESS', item.freshLabel == '—' ? 'unknown' : '${item.freshLabel} old (gate: 24 h for Tier 1, 7 days for everything)'),
-          row('SOURCE', item.primarySource ? 'Primary — the acting party published it' : 'Reported — coverage of the action', color: item.primarySource ? p.signal : null),
-          row('CORROBORATION', '${item.sourceCount ?? 1} capture${(item.sourceCount ?? 1) == 1 ? '' : 's'}'),
-          if (item.direction != null) row('DIRECTION', item.direction!),
-          if (item.horizon != null) row('HORIZON', item.horizon!),
-          if (item.updateType != null) row('UPDATE', item.updateType!),
-          if (item.contentType != null) row('CONTENT', item.contentType!.replaceAll('_', ' ')),
-          if (item.dimensions.isNotEmpty) row('ALSO TOUCHES', item.dimensions.map(domainShort).join(', ')),
-          const SizedBox(height: 10),
-          Text('The rubric is enforced in code before anything posts: Tier 1 needs a primary source under 24 hours; nothing older than seven days; echoes are demoted.',
-              style: reading(size: 12.5, color: p.slate, height: 1.4)),
         ]),
       ),
     );

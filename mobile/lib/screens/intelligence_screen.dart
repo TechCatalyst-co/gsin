@@ -123,8 +123,8 @@ class _IntelligenceScreenState extends State<IntelligenceScreen> {
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Expanded(child: Text('Intelligence', style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1))),
-                if (dates.length > 1 && currentDate != null)
+                Expanded(child: Text('Briefs', style: display(size: 26, weight: FontWeight.w700, color: p.ink, height: 1))),
+                if (dates.isNotEmpty && currentDate != null)
                   _DayPicker(dates: dates, value: currentDate, label: _dayLabel, onChanged: (d) => _pick(date: d, type: _type ?? 'morning')),
               ]),
               const SizedBox(height: 6),
@@ -199,6 +199,8 @@ class _Editions extends StatelessWidget {
   }
 }
 
+/// The chosen day as a button; tapping it opens a calendar where only days
+/// that have a brief can be picked.
 class _DayPicker extends StatelessWidget {
   const _DayPicker({required this.dates, required this.value, required this.label, required this.onChanged});
   final List<String> dates;
@@ -206,24 +208,36 @@ class _DayPicker extends StatelessWidget {
   final String Function(String) label;
   final ValueChanged<String> onChanged;
 
+  static DateTime _day(String ymd) => DateTime.parse(ymd);
+  static String _ymd(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _open(BuildContext context) async {
+    final available = dates.toSet();
+    final sorted = [...dates]..sort();
+    final current = available.contains(value) ? value : sorted.last;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day(current),
+      firstDate: _day(sorted.first),
+      lastDate: _day(sorted.last),
+      selectableDayPredicate: (d) => available.contains(_ymd(d)),
+      helpText: 'Choose a briefing day',
+    );
+    if (picked != null) onChanged(_ymd(picked));
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final v = dates.contains(value) ? value : dates.first;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(6), border: Border.all(color: p.line)),
-      child: DropdownButton<String>(
-        value: v,
-        isDense: true,
-        underline: const SizedBox.shrink(),
-        icon: Icon(Icons.expand_more, size: 18, color: p.slate),
-        dropdownColor: p.surface,
-        style: display(size: 12.5, weight: FontWeight.w600, color: p.ink),
-        items: [for (final d in dates) DropdownMenuItem(value: d, child: Text(label(d)))],
-        onChanged: (d) {
-          if (d != null) onChanged(d);
-        },
+    return OutlinedButton.icon(
+      onPressed: () => _open(context),
+      icon: Icon(Icons.calendar_today_outlined, size: 16, color: p.ink2),
+      label: Text(label(value), style: display(size: 12.5, weight: FontWeight.w600, color: p.ink)),
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        side: BorderSide(color: p.line),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
     );
   }

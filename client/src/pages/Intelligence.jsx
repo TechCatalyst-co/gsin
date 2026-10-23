@@ -5,9 +5,9 @@ import { BRAND, domainShort } from '../brand';
 import { LabelChip } from '../components/Chips';
 import { ConfidenceRing } from '../components/Signal';
 import AdSlot from '../components/AdSlot';
+import BriefCalendar from '../components/BriefCalendar';
 import { useDocumentTitle } from './Home';
 
-const dayLabel = (ymd) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 const isEvening = (b) => b?.briefType === 'evening';
 const statusLabel = (s) => String(s || 'pending').replace(/_/g, ' ');
 
@@ -19,7 +19,7 @@ export default function Intelligence() {
   const [brief, setBrief] = useState(undefined);
   const [editions, setEditions] = useState([]);
   const [error, setError] = useState('');
-  useDocumentTitle(`Intelligence — ${BRAND.name}`);
+  useDocumentTitle(`Briefs — ${BRAND.name}`);
 
   useEffect(() => {
     setBrief(undefined);
@@ -41,7 +41,7 @@ export default function Intelligence() {
     <div className="shell intel">
       <header className="intel-head">
         <div>
-          <h1>Intelligence</h1>
+          <h1>Briefs</h1>
           <p className="muted" style={{ margin: '4px 0 0' }}>Two briefs a day, audited before they go out. <LabelChip kind="analysis" /></p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -51,13 +51,8 @@ export default function Intelligence() {
               <button className={isEvening(brief) ? 'is-on' : ''} disabled={!todayHas('evening') && brief && !isEvening(brief)} onClick={() => nav(`/intelligence/${currentDate}/evening`)}>Evening</button>
             </div>
           )}
-          {dates.length > 1 && (
-            <label className="brief-picker">
-              Day
-              <select value={currentDate || ''} onChange={(e) => nav(`/intelligence/${e.target.value}`)}>
-                {dates.map((d) => <option key={d} value={d}>{dayLabel(d)}</option>)}
-              </select>
-            </label>
+          {dates.length > 0 && (
+            <BriefCalendar value={currentDate} available={dates} onChange={(d) => nav(`/intelligence/${d}`)} />
           )}
         </div>
       </header>

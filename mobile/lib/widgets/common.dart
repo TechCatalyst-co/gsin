@@ -185,42 +185,6 @@ class LabelChip extends StatelessWidget {
       };
 }
 
-/// The chips every story carries: tier, desk, verified seal, kind, escalation.
-class ItemChips extends StatelessWidget {
-  const ItemChips({super.key, required this.item, this.tappableDomain = false});
-  final NewsItem item;
-  final bool tappableDomain;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(spacing: 6, runSpacing: 6, children: [
-      if (item.graded || item.urgent) TierChip(item.tier, long: item.tier == 1),
-      DomainChip(item.category, tappable: tappableDomain),
-      if (item.primarySource) const GsiChip('Verified source', verified: true),
-      if (item.kind != null && item.kind!.isNotEmpty) GsiChip(item.kind!),
-      if (item.updateType == 'escalation') const GsiChip('Escalation'),
-    ]);
-  }
-}
-
-/// Older screens use these two names.
-class CategoryLabel extends StatelessWidget {
-  const CategoryLabel({super.key, required this.name, this.tappable = true});
-  final String? name;
-  final bool tappable;
-  @override
-  Widget build(BuildContext context) => DomainChip(name, tappable: tappable);
-}
-
-class BreakingFlag extends StatelessWidget {
-  const BreakingFlag({super.key});
-  @override
-  Widget build(BuildContext context) => const TierChip(1, long: true);
-}
-
-// ---------------------------------------------------------------------------
-// Instruments
-
 /// Signal score as a thin segmented meter with the number.
 class SignalMeter extends StatelessWidget {
   const SignalMeter({super.key, required this.score, this.tier = 3, this.width = 64});
@@ -244,26 +208,6 @@ class SignalMeter extends StatelessWidget {
       const SizedBox(width: 6),
       Text('$score', style: figures(size: 12, color: p.ink2, weight: FontWeight.w600)),
     ]);
-  }
-}
-
-/// Signal score as an arc gauge.
-class SignalGauge extends StatelessWidget {
-  const SignalGauge({super.key, required this.score, this.size = 46});
-  final int score;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _ArcPainter(value: score / 100, track: p.line, fill: p.signal, stroke: size * 0.09, sweep: 1.5 * math.pi),
-        child: Center(child: Text('$score', style: figures(size: size * 0.34, color: p.ink, weight: FontWeight.w600))),
-      ),
-    );
   }
 }
 
@@ -339,43 +283,6 @@ class Reading extends StatelessWidget {
     );
   }
 }
-
-/// Gauge / fresh / sources / verified, framed.
-class InstrumentStrip extends StatelessWidget {
-  const InstrumentStrip({super.key, required this.item});
-  final NewsItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final verified = item.primarySource;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: p.line),
-      ),
-      child: Row(children: [
-        Reading(label: 'SIGNAL', child: SignalGauge(score: item.signalScore ?? 0)),
-        _divider(p),
-        Reading(label: 'FRESH', value: item.freshLabel),
-        _divider(p),
-        Reading(label: 'SOURCES', value: '${math.max(1, item.sourceCount ?? 1)}'),
-        _divider(p),
-        Reading(
-          label: verified ? 'VERIFIED' : 'REPORTED',
-          child: Icon(verified ? Icons.verified_outlined : Icons.description_outlined, size: 24, color: verified ? p.signal : p.slate),
-        ),
-      ]),
-    );
-  }
-
-  Widget _divider(AppPalette p) => Container(width: 1, height: 40, color: p.line);
-}
-
-// ---------------------------------------------------------------------------
-// Sections, states
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader(this.title, {super.key, this.caption, this.trailing, this.padding = const EdgeInsets.fromLTRB(16, 18, 16, 8)});
@@ -593,7 +500,6 @@ class StoryMeta extends StatelessWidget {
           if (showCategory && item.category != null) Text(domainShort(item.category), style: small.copyWith(color: p.ink2)),
           Text(item.source, style: small.copyWith(color: p.ink2, fontWeight: FontWeight.w500)),
           Text(timeAgo(item.published), style: small),
-          if ((item.sourceCount ?? 1) > 1) Text('${item.sourceCount} sources', style: small),
           if (item.commentCount > 0) Text('${item.commentCount} comment${item.commentCount == 1 ? '' : 's'}', style: small),
         ]),
       ),
@@ -605,8 +511,8 @@ class StoryMeta extends StatelessWidget {
   }
 }
 
-/// The lead story as an instrument panel: chips, the biggest type on the screen,
-/// impact, plain English, the four readings, and the two actions.
+/// The lead story: a breaking flag when it is one, the biggest type on the
+/// screen, its impact, one meta line, and the two actions.
 class LeadStory extends StatelessWidget {
   const LeadStory({super.key, required this.item});
   final NewsItem item;
@@ -618,8 +524,7 @@ class LeadStory extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ItemChips(item: item),
-        const SizedBox(height: 12),
+        if (item.tier == 1 && (item.graded || item.urgent)) ...[const TierChip(1, long: true), const SizedBox(height: 12)],
         InkWell(
           onTap: () => openStory(context, item),
           child: Text(item.title, style: display(size: 27, weight: FontWeight.w700, color: p.ink, height: 1.12, letterSpacing: -0.4)),
@@ -628,13 +533,8 @@ class LeadStory extends StatelessWidget {
           const SizedBox(height: 10),
           Text(dek, style: reading(size: 15.5, color: p.ink2, height: 1.45)),
         ],
-        if (item.industryLine != null && item.industryLine!.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          PlainEnglish(text: item.industryLine!),
-        ],
-        if (item.graded) ...[const SizedBox(height: 14), InstrumentStrip(item: item)],
         const SizedBox(height: 10),
-        StoryMeta(item: item, showSignal: false),
+        StoryMeta(item: item, showCategory: true, showSignal: false),
         const SizedBox(height: 12),
         Row(children: [
           FilledButton(onPressed: () => openStory(context, item), child: const Text('Open the story')),
@@ -675,8 +575,8 @@ class PlainEnglish extends StatelessWidget {
   }
 }
 
-/// Standard list row: tier rail on the left, chips, headline, dek, meta with
-/// the signal meter. Thumbnail on the right when there is one.
+/// Standard list row: tier rail on the left, a breaking flag when it is one,
+/// headline, dek and one meta line. Thumbnail on the right when there is one.
 class StoryTile extends StatelessWidget {
   const StoryTile({super.key, required this.item, this.showCategory = true, this.compact = false});
   final NewsItem item;
@@ -698,12 +598,8 @@ class StoryTile extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (!compact) ...[
-                Wrap(spacing: 6, runSpacing: 6, children: [
-                  if (item.graded || item.urgent) TierChip(item.tier),
-                  if (showCategory) DomainChip(item.category),
-                  if (item.primarySource) const GsiChip('Verified', verified: true),
-                ]),
+              if (!compact && item.tier == 1 && (item.graded || item.urgent)) ...[
+                const TierChip(1, long: true),
                 const SizedBox(height: 8),
               ],
               Text(item.title,
@@ -713,7 +609,7 @@ class StoryTile extends StatelessWidget {
                 Text(item.dek!, maxLines: 2, overflow: TextOverflow.ellipsis, style: reading(size: 14, color: p.ink2, height: 1.4)),
               ],
               const SizedBox(height: 8),
-              StoryMeta(item: item, showSignal: !compact),
+              StoryMeta(item: item, showCategory: showCategory, showSignal: false),
             ]),
           ),
           if (hasThumb) ...[

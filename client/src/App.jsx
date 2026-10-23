@@ -11,7 +11,6 @@ import Story from './pages/Story';
 import Intelligence from './pages/Intelligence';
 import Watchlist from './pages/Watchlist';
 import About from './pages/About';
-import RadarStrip from './components/RadarStrip';
 import BootScreen from './components/BootScreen';
 import { Research } from './pages/Topic';
 import Saved from './pages/Saved';
@@ -34,13 +33,13 @@ export default function App() {
       <AuthProvider>
         <a className="skip" href="#main">Skip to content</a>
         <BootScreen />
-        <RadarStrip />
         <Masthead />
         <main id="main">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/welcome" element={<Landing />} />
-            <Route path="/newsroom" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/news" element={<Home />} />
+            <Route path="/welcome" element={<Navigate to="/" replace />} />
+            <Route path="/newsroom" element={<Navigate to="/news" replace />} />
             <Route path="/topic/:slug" element={<Topic />} />
             <Route path="/research" element={<Research />} />
             <Route path="/story/:slug" element={<Story />} />

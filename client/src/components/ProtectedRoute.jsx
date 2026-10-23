@@ -19,6 +19,6 @@ export function RequireStaff({ children }) {
   if (loading) return <Loading />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (user.mustChangePassword) return <Navigate to="/change-password" replace />;
-  if (!user.capabilities?.curate) return <Navigate to="/" replace />;
+  if (!user.capabilities?.curate) return <Navigate to="/news" replace />;
   return children;
 }
