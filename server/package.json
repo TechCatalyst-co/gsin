@@ -1,6 +1,6 @@
 {
   "name": "gsin-server",
-  "version": "0.1.0",
+  "version": "2.0.1",
   "description": "API for Global Super Intelligence News — an AI & superintelligence news outlet fed by n8n",
   "main": "server.js",
   "type": "commonjs",
