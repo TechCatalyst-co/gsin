@@ -40,7 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context.canPop() ? context.pop() : context.go('/');
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      debugPrint('Sign in failed: $e');
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

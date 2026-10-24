@@ -49,7 +49,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context.canPop() ? context.pop() : context.go('/');
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      debugPrint('Create account failed: $e');
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
