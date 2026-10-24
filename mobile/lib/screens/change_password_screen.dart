@@ -40,6 +40,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) context.go('/');
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      debugPrint('Change password failed: $e');
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

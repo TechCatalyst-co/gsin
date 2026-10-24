@@ -26,14 +26,39 @@ function briefTopic() {
   return process.env.PUSH_BRIEF_TOPIC || 'brief';
 }
 
+// Accepts the service-account JSON raw, base64-encoded, or pasted with
+// surrounding quotes (a common dashboard mistake). Throws a message that
+// describes the shape of the value without echoing any of it.
+function parseServiceAccount(raw) {
+  let s = raw.trim();
+  // '{...}' or "{...}" — strip one layer of wrapping quotes.
+  if (/^(['"`])[\s\S]*\1$/.test(s)) {
+    let decoded;
+    if (s[0] === '"') {
+      try { decoded = JSON.parse(s); } catch { /* plain quotes, not a JSON string */ }
+    }
+    s = (typeof decoded === 'string' ? decoded : s.slice(1, -1)).trim();
+  }
+  if (!s.startsWith('{')) {
+    if (!/^[A-Za-z0-9+/=_\-\s]+$/.test(s)) {
+      throw new Error(`expected the service-account JSON or its base64, got a value starting with ${JSON.stringify(s[0])} (length ${s.length})`);
+    }
+    s = Buffer.from(s, 'base64').toString('utf8').trim();
+    if (!s.startsWith('{')) throw new Error('base64 value does not decode to JSON');
+  }
+  const json = JSON.parse(s);
+  if (!json.private_key || !json.client_email) throw new Error('JSON is missing private_key or client_email');
+  return json;
+}
+
 function loadSender() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) return null;
   try {
-    const json = raw.trim().startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8');
+    const account = parseServiceAccount(raw);
     const { initializeApp, cert, getApps } = require('firebase-admin/app');
     const { getMessaging } = require('firebase-admin/messaging');
-    const app = getApps()[0] || initializeApp({ credential: cert(JSON.parse(json)) });
+    const app = getApps()[0] || initializeApp({ credential: cert(account) });
     const messaging = getMessaging(app);
     return (message) => messaging.send(message);
   } catch (err) {
@@ -146,4 +171,4 @@ async function alertBrief({ briefingDate, briefType, push }) {
   }
 }
 
-module.exports = { alertBreaking, alertBrief, buildMessage, buildBriefMessage, setSender, topic, briefTopic };
+module.exports = { alertBreaking, alertBrief, buildMessage, buildBriefMessage, parseServiceAccount, setSender, topic, briefTopic };

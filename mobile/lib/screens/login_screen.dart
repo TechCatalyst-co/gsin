@@ -7,7 +7,10 @@ import '../auth/auth_state.dart';
 import '../widgets/auth_scaffold.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.back = false});
+
+  /// Return to the screen that opened this one instead of the Briefs tab.
+  final bool back;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -37,10 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await context.read<AuthState>().login(_email.text.trim(), _password.text);
       if (mounted) {
-        context.canPop() ? context.pop() : context.go('/');
+        widget.back && context.canPop() ? context.pop() : context.go('/');
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      debugPrint('Sign in failed: $e');
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -93,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       switchText: 'New here? ',
       switchLinkText: 'Create an account',
-      onSwitch: () => context.pushReplacement('/register'),
+      onSwitch: () => context.pushReplacement(widget.back ? '/register?back=1' : '/register'),
     );
   }
 }

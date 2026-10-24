@@ -34,7 +34,13 @@ class AuthState extends ChangeNotifier {
   /// Restore the persisted session on app launch.
   Future<void> init() async {
     final started = DateTime.now();
-    final token = await _storage.read(key: _tokenKey);
+    String? token;
+    try {
+      token = await _storage.read(key: _tokenKey);
+    } catch (e) {
+      // An unreadable keystore means no restorable session, not a stuck splash.
+      debugPrint('AuthState: could not read token: $e');
+    }
     if (token == null) {
       await _awaitMinSplash(started);
       _setGuest();
@@ -99,11 +105,23 @@ class AuthState extends ChangeNotifier {
     // `client: 'mobile'` opts into the longer-lived mobile token.
     final data = await _api.post(path, {...body, 'client': 'mobile'});
     final token = data['token'] as String;
-    await _storage.write(key: _tokenKey, value: token);
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
+    // Sign in before persisting: the server has already accepted the
+    // credentials, so a keychain/keystore failure must not strand the user on
+    // the form (it only costs the session surviving a relaunch).
     _api.token = token;
-    _user = User.fromJson(data['user'] as Map<String, dynamic>);
+    _user = user;
     _status = AuthStatus.authed;
     notifyListeners();
+    await _persistToken(token);
+  }
+
+  Future<void> _persistToken(String token) async {
+    try {
+      await _storage.write(key: _tokenKey, value: token);
+    } catch (e) {
+      debugPrint('AuthState: could not persist token: $e');
+    }
   }
 
   /// Re-fetch the current user, e.g. after subscribing on the web.
@@ -128,18 +146,23 @@ class AuthState extends ChangeNotifier {
       'client': 'mobile',
     });
     final token = data['token'] as String;
-    await _storage.write(key: _tokenKey, value: token);
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
     _api.token = token;
-    _user = User.fromJson(data['user'] as Map<String, dynamic>);
+    _user = user;
     notifyListeners();
+    await _persistToken(token);
   }
 
   Future<void> logout() => handleUnauthorized();
 
   /// Clear the stored session. Reading stays available signed out.
   Future<void> handleUnauthorized() async {
-    await _storage.delete(key: _tokenKey);
     _setGuest();
+    try {
+      await _storage.delete(key: _tokenKey);
+    } catch (e) {
+      debugPrint('AuthState: could not delete token: $e');
+    }
   }
 
   void _setGuest({bool clearToken = true}) {

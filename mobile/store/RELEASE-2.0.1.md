@@ -211,11 +211,13 @@ Choose "All or some functionality is restricted", then add the same demo account
 | iPhone 6.9" screenshots (required) | `store/app-store/iphone-6.9/` |
 | iPhone 6.5" / 6.3" / 6.1" screenshots | `store/app-store/iphone-6.5/`, `iphone-6.3/`, `iphone-6.1/` |
 | App preview video | `store/app-store/app-preview/` |
-| Play phone screenshots (2–8) | `store/play-screenshots/01-signal.png` … `05-watchlist.png` |
+| Play phone screenshots (2–8) | `store/play-screenshots/01-news.png` … `05-watchlist.png` |
+| Play large-screen screenshots | `store/play-desktop-screenshots/01-overview.png` … `04-calendar.png` |
 | Play feature graphic 1024×500 | `store/feature-graphic-1024x500.png` |
 | Play app icon 512×512 | Export from `assets/` (the launcher icon source) |
+| App Store header / search results | `store/app-store/header-3840x1646.png`, `search-results-3840x2560.png` |
 
-**Check the screenshots before you upload.** Several were made before 2.0.1. Any that show the Radar tab, the radar strip or the stats and grading panels no longer match the app. Both stores can reject a listing whose screenshots don't match the build, so retake those from 2.0.1.
+All screenshots were captured from the 2.0.1 build on October 24, 2026. They are in the same order in every set: News, Story, Brief, Calendar, Watchlist. To regenerate them after a UI change, replace the captures in `store/screens/` and run `python3 mobile/store/render_screens.py`.
 
 ---
 
@@ -224,7 +226,7 @@ Choose "All or some functionality is restricted", then add the same demo account
 **iOS**
 - [ ] `flutter build ipa --release`, then upload with Transporter or Xcode Organizer
 - [ ] App Store Connect: + Version → **2.0.1**, attach build **2**
-- [ ] Paste What's New, update promotional text and screenshots if needed
+- [ ] Paste What's New, update promotional text, and replace screenshots with the 2.0.1 set
 - [ ] Confirm the demo account still signs in
 - [ ] Submit for review; release manually or automatically after approval
 

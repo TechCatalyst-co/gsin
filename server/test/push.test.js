@@ -83,3 +83,13 @@ test('push: a failed send releases the claim so it can retry', async () => {
   await request(app).post('/api/news').set(KEY).send(story).expect(200);
   assert.equal(sent.length, 1);
 });
+
+test('push: service account parses raw, base64 and quoted pastes', () => {
+  const acct = { type: 'service_account', private_key: '-----BEGIN PRIVATE KEY-----\nk\n-----END PRIVATE KEY-----\n', client_email: 'a@b.iam' };
+  const json = JSON.stringify(acct, null, 2);
+  for (const raw of [json, Buffer.from(json).toString('base64'), `'${json}'`, `"${json}"`, JSON.stringify(json)]) {
+    assert.equal(push.parseServiceAccount(raw).client_email, 'a@b.iam');
+  }
+  assert.throws(() => push.parseServiceAccount('./service-account.json'), /starting with "\."/);
+  assert.throws(() => push.parseServiceAccount(JSON.stringify({ type: 'x' })), /missing private_key/);
+});
