@@ -142,6 +142,24 @@ class PushService extends ChangeNotifier {
     return status == AuthorizationStatus.authorized || status == AuthorizationStatus.provisional;
   }
 
+  Future<void>? _apnsToken;
+
+  /// On iOS, FCM can't subscribe to topics until APNs has handed the device its
+  /// token, which arrives asynchronously after permission is granted. Waits for
+  /// it (shared across callers), giving up after ~10s.
+  Future<void> _awaitApnsToken() {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return Future.value();
+    return _apnsToken ??= () async {
+      final messaging = FirebaseMessaging.instance;
+      for (var i = 0; i < 20; i++) {
+        if (await messaging.getAPNSToken() != null) return;
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      _apnsToken = null; // let a later toggle try again
+      throw StateError('no APNs token after 10s (check the Push Notifications capability and signing)');
+    }();
+  }
+
   Future<void> setEnabled(bool value, {bool persist = true}) async {
     if (!_available) return;
     final messaging = FirebaseMessaging.instance;
@@ -152,6 +170,7 @@ class PushService extends ChangeNotifier {
           notifyListeners();
           return;
         }
+        await _awaitApnsToken();
         await messaging.subscribeToTopic(pushTopic);
       } else {
         await messaging.unsubscribeFromTopic(pushTopic);
@@ -177,6 +196,7 @@ class PushService extends ChangeNotifier {
           notifyListeners();
           return;
         }
+        await _awaitApnsToken();
         await messaging.subscribeToTopic(pushBriefTopic);
       } else {
         await messaging.unsubscribeFromTopic(pushBriefTopic);
