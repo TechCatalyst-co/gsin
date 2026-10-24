@@ -6,7 +6,7 @@ export const BRAND = {
   description: 'A graded feed of artificial intelligence and the path to superintelligence, swept from primary sources every 30 minutes.',
   supportEmail: 'support@techcatalyst.co',
   privacyEmail: 'privacy@techcatalyst.co',
-  sourceCount: 34,
+  sourceCount: 44,
 };
 
 // The legal entity behind the outlet, named in the Privacy Policy and Terms.
