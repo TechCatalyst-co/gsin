@@ -35,4 +35,4 @@ const String pushTopic = String.fromEnvironment('PUSH_TOPIC', defaultValue: 'bre
 const String pushBriefTopic = String.fromEnvironment('PUSH_BRIEF_TOPIC', defaultValue: 'brief');
 
 /// Shown in the launch readout and the Account screen.
-const String appVersionLabel = 'v2.0.1';
+const String appVersionLabel = 'v2.0.2';
