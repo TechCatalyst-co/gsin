@@ -96,7 +96,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   ? 'Evening Daily Brief goes out, with yesterday’s forecasts graded'
                   : 'Morning Briefing consolidates the last 24 hours',
               source: '${Brand.name} · scheduled',
-              onTap: () => context.go('/intelligence'),
+              onTap: () => context.go('/'),
             ),
           if (_loading)
             const RadarLoading(text: 'Reading the horizon…')

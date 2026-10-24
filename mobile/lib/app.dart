@@ -57,7 +57,7 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // A tapped alert opens its story (or brief) on top of the Signal tab. On a
+  // A tapped alert opens its story (or brief) on top of the Briefs tab. On a
   // cold start the launch sequence is still running, so it waits for auth.
   void _openAlert(PushAlert alert) {
     _pendingAlert = alert;
@@ -118,8 +118,10 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
     },
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      // `?back=1` returns to the opening screen (e.g. a story) after signing
+      // in; otherwise the user lands on the Briefs home tab.
+      GoRoute(path: '/login', builder: (context, state) => LoginScreen(back: state.uri.queryParameters['back'] == '1')),
+      GoRoute(path: '/register', builder: (context, state) => RegisterScreen(back: state.uri.queryParameters['back'] == '1')),
       GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
       GoRoute(
         path: '/story/:ref',
@@ -159,12 +161,14 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       GoRoute(path: '/saved', builder: (context, state) => Scaffold(appBar: AppBar(title: const Text('Saved')), body: const SavedScreen())),
       GoRoute(path: '/newsroom', builder: (context, state) => const NewsroomScreen()),
       // Radar folded into News; old links land there.
-      GoRoute(path: '/radar', redirect: (context, state) => '/'),
+      GoRoute(path: '/radar', redirect: (context, state) => '/news'),
       ShellRoute(
         builder: (context, state, child) => _HomeShell(location: state.matchedLocation, child: child),
         routes: [
-          GoRoute(path: '/', pageBuilder: (context, state) => _tab(state, const SignalScreen())),
-          GoRoute(path: '/intelligence', pageBuilder: (context, state) => _tab(state, const IntelligenceScreen())),
+          // Briefs is the home tab; /intelligence stays as an alias for old links.
+          GoRoute(path: '/', pageBuilder: (context, state) => _tab(state, const IntelligenceScreen())),
+          GoRoute(path: '/intelligence', redirect: (context, state) => '/'),
+          GoRoute(path: '/news', pageBuilder: (context, state) => _tab(state, const SignalScreen())),
           GoRoute(path: '/watchlist', pageBuilder: (context, state) => _tab(state, const WatchlistScreen())),
           GoRoute(path: '/account', pageBuilder: (context, state) => _tab(state, const AccountScreen())),
         ],
@@ -196,8 +200,8 @@ class _HomeShell extends StatelessWidget {
   final Widget child;
 
   static const _tabs = [
-    (path: '/', icon: Icons.article_outlined, active: Icons.article, label: 'News'),
-    (path: '/intelligence', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Briefs'),
+    (path: '/', icon: Icons.auto_awesome_outlined, active: Icons.auto_awesome, label: 'Briefs'),
+    (path: '/news', icon: Icons.article_outlined, active: Icons.article, label: 'News'),
     (path: '/watchlist', icon: Icons.schedule_outlined, active: Icons.schedule, label: 'Watchlist'),
     (path: '/account', icon: Icons.person_outline, active: Icons.person, label: 'Account'),
   ];

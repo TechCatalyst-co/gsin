@@ -73,7 +73,7 @@ class _StoryScreenState extends State<StoryScreen> {
     if (item == null) return;
     final auth = context.read<AuthState>();
     if (!auth.isAuthed) {
-      context.push('/login');
+      context.push('/login?back=1');
       return;
     }
     final next = !item.bookmarked;
@@ -388,7 +388,7 @@ class _Discussion extends StatelessWidget {
                   ),
                 ),
                 if (!auth.isAuthed)
-                  TextButton(onPressed: () => context.push('/login'), child: const Text('Sign in')),
+                  TextButton(onPressed: () => context.push('/login?back=1'), child: const Text('Sign in')),
               ]),
             ),
           if (thread.isEmpty)

@@ -10,7 +10,10 @@ import '../widgets/auth_scaffold.dart';
 final _emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.back = false});
+
+  /// Return to the screen that opened this one instead of the Briefs tab.
+  final bool back;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -46,7 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _password.text,
           );
       if (mounted) {
-        context.canPop() ? context.pop() : context.go('/');
+        widget.back && context.canPop() ? context.pop() : context.go('/');
       }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -114,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       switchText: 'Already a member? ',
       switchLinkText: 'Sign in',
-      onSwitch: () => context.pushReplacement('/login'),
+      onSwitch: () => context.pushReplacement(widget.back ? '/login?back=1' : '/login'),
     );
   }
 }
