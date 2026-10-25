@@ -6,15 +6,15 @@ import '../api/api_client.dart';
 import '../api/api_exception.dart';
 import '../api/gsi_api.dart';
 import '../auth/auth_state.dart';
-import '../brand.dart';
 import '../models/news_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/fold.dart';
 import '../widgets/radar_strip.dart';
 
-/// News: the home tab. Topic filter, the lead story with the latest brief under
+/// News: the home tab. Topic pills, the lead story with the latest brief under
 /// it, then one feed (tiers 1–3 from the last seven days, strongest first).
+/// Mirrors client/src/pages/Home.jsx so the web and app show the same page.
 class SignalScreen extends StatefulWidget {
   const SignalScreen({super.key});
 
@@ -24,9 +24,8 @@ class SignalScreen extends StatefulWidget {
 
 class _SignalScreenState extends State<SignalScreen> {
   List<NewsItem>? _items;
-  List<NewsItem> _fallback = const [];
+  Map<String, dynamic> _front = const {};
   List<DailyBrief> _briefs = const [];
-  String? _filter;
   String? _error;
   String? _loadedFor;
 
@@ -45,20 +44,15 @@ class _SignalScreenState extends State<SignalScreen> {
     final api = context.read<ApiClient>();
     try {
       final results = await Future.wait<dynamic>([
-        api.feed(tier: 3, sort: 'signal', hours: 168, limit: 50),
+        api.frontPage(),
+        api.feed(tier: 3, sort: 'signal', hours: 168, limit: 40).catchError((_) => <NewsItem>[]),
         api.briefList(limit: 1).catchError((_) => <DailyBrief>[]),
       ]);
-      var items = results[0] as List<NewsItem>;
-      // Before the radar has graded anything, show whatever the wire has.
-      if (items.isEmpty) {
-        _fallback = await api.feed(sort: 'latest', limit: 30).catchError((_) => <NewsItem>[]);
-      } else {
-        _fallback = const [];
-      }
       if (!mounted) return;
       setState(() {
-        _items = items;
-        _briefs = results[1] as List<DailyBrief>;
+        _front = results[0] as Map<String, dynamic>;
+        _items = results[1] as List<NewsItem>;
+        _briefs = results[2] as List<DailyBrief>;
         _error = null;
       });
       context.read<RadarState>().refresh();
@@ -81,10 +75,16 @@ class _SignalScreenState extends State<SignalScreen> {
           : const Center(child: RadarLoading());
     }
 
-    final pool = items.isNotEmpty ? items : _fallback;
-    final lead = _filter == null && pool.isNotEmpty ? pool.first : null;
-    final filtered = _filter == null ? pool : pool.where((i) => i.category == _filter).toList();
-    final rest = lead == null ? filtered : filtered.where((i) => i.id != lead.id).toList();
+    final latest = NewsItem.listFrom(_front['latest']);
+    final discussed = NewsItem.listFrom(_front['mostDiscussed']);
+    final lead = _pickLead(
+      breaking: NewsItem.listFrom(_front['breaking']),
+      featured: NewsItem.listFrom(_front['featured']),
+      latest: latest,
+    );
+    // Before the radar has graded anything, show whatever the wire has.
+    final pool = items.isNotEmpty ? items : latest;
+    final rest = lead == null ? pool : pool.where((i) => i.id != lead.id).toList();
 
     return RefreshIndicator(
       color: p.signal,
@@ -94,32 +94,29 @@ class _SignalScreenState extends State<SignalScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         children: [
-          FilterPills(selected: _filter, onChanged: (v) => setState(() => _filter = v), padding: const EdgeInsets.fromLTRB(16, 12, 16, 4)),
-          if (pool.isEmpty)
+          // A desk opens its own feed, like the web's /topic/:slug.
+          FilterPills(
+            selected: null,
+            onChanged: (v) {
+              if (v != null) context.push('/topic/${Uri.encodeComponent(v)}');
+            },
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          ),
+          if (lead == null)
             EmptyState(
               title: 'The radar is live and nothing has cleared the bar yet.',
               body: 'Stories appear here the moment one grades Tier 1 to 3. The radar sweeps ${radar.sourceCount} sources every 30 minutes.',
             )
           else ...[
-            if (lead != null) ...[
-              LeadStory(item: lead),
-              if (_briefs.isNotEmpty)
-                Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: _BriefCard(brief: _briefs.first)),
-              Divider(color: p.line),
-            ],
+            LeadStory(item: lead),
+            if (_briefs.isNotEmpty)
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: _BriefCard(brief: _briefs.first)),
+            Divider(color: p.line),
             SectionHeader(
-              _filter == null ? 'By topic' : domainShort(_filter),
+              'By topic',
               caption: items.isNotEmpty ? 'last seven days, strongest first' : 'latest from the wire',
             ),
-            if (rest.isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                child: Text('Nothing from this desk cleared the bar this week.', style: reading(size: 14, color: p.slate)),
-              )
-            // One desk picked: a plain list. All desks: one fold per desk.
-            else if (_filter != null)
-              for (final it in rest) StoryTile(item: it, showCategory: false)
-            else
+            if (rest.isNotEmpty)
               TopicGroups<NewsItem>(
                 items: rest,
                 category: (i) => i.category,
@@ -130,12 +127,31 @@ class _SignalScreenState extends State<SignalScreen> {
               padding: const EdgeInsets.all(16),
               child: OutlinedButton(onPressed: () => context.push('/search'), child: const Text('Browse all stories')),
             ),
+            if (discussed.isNotEmpty) ...[
+              const SectionHeader('Most discussed'),
+              for (final it in discussed.take(5)) StoryTile(item: it),
+            ],
             const SizedBox(height: 8),
           ],
         ],
       ),
     );
   }
+}
+
+/// The lead is the strongest verified item: T1 with a primary source first,
+/// then the newest breaking, then the editors' pick, then the latest. Same
+/// rule as pickLead() in client/src/pages/Home.jsx.
+NewsItem? _pickLead({required List<NewsItem> breaking, required List<NewsItem> featured, required List<NewsItem> latest}) {
+  final t1 = [...breaking, ...latest].where((i) => i.urgencyTier == 1).toList()
+    ..sort((a, b) {
+      final byPrimary = (b.primarySource ? 1 : 0) - (a.primarySource ? 1 : 0);
+      return byPrimary != 0 ? byPrimary : (b.signalScore ?? 0).compareTo(a.signalScore ?? 0);
+    });
+  if (t1.isNotEmpty) return t1.first;
+  if (breaking.isNotEmpty) return breaking.first;
+  if (featured.isNotEmpty) return featured.first;
+  return latest.isNotEmpty ? latest.first : null;
 }
 
 /// The latest brief, one line of summary, tap to read.

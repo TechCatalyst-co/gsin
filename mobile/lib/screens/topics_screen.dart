@@ -20,7 +20,8 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   String _sort = 'signal';
-  int? _tier = 3;
+  // No tier floor by default, like the web's topic and search pages.
+  int? _tier;
 
   String get _title {
     if (widget.category != null) return categoryMeta(widget.category).name;
