@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { BRAND } from "../brand";
 
 /**
  * Launch: the global sweep. A wireframe globe draws itself around the mark, the source cities light up as signal points,
@@ -7,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * Shown once per browser session (decided before first paint by the inline script in layout.tsx); skipped for
  * prefers-reduced-motion; click or any key skips it. Same geometry and timing as the iOS launch screen.
  */
-const READOUT = ["radar online, 34 sources", "freshness gate 7 days, primary sources first", "grading, four tiers, strict rubric", "ready"];
+const READOUT = [`radar online, ${BRAND.sourceCount} sources`, "freshness gate 7 days, primary sources first", "grading, four tiers, strict rubric", "ready"];
 const CITIES = [
   [37.77, -122.42], [47.61, -122.33], [38.9, -77.04], [40.71, -74.01], [42.36, -71.06], [43.65, -79.38],
   [51.51, -0.13], [48.86, 2.35], [52.52, 13.4], [50.85, 4.35], [32.08, 34.78], [25.2, 55.27],
@@ -134,7 +135,7 @@ export default function BootScreen() {
           {lines === 0 && <div className="boot-ln"><span className="ts">{stamp(0)}</span><i className="cur" /></div>}
         </div>
         <div className="boot-bar"><i /></div>
-        <div className="boot-caption"><span>34 sources  /  every 30 minutes  /  primary sources first</span><span>v2.0.2</span></div>
+        <div className="boot-caption"><span>{BRAND.sourceCount} sources  /  every 30 minutes  /  primary sources first</span><span>v2.0.2</span></div>
       </div>
     </div>
   );
