@@ -19,7 +19,7 @@ export const OPERATOR = {
 // Store listings for the mobile app. A null link shows as "coming soon".
 export const APP_STORES = {
   ios: 'https://apps.apple.com/us/app/global-super-intelligence-news/id6824711002',
-  android: null,
+  android: 'https://play.google.com/store/apps/details?id=co.techcatalyst.gsin',
 };
 
 // Bump when the Privacy Policy or Terms change.
