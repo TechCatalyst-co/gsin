@@ -171,6 +171,7 @@ No key needed.
 | --- | --- |
 | `GET /api/news?category=&domain=&tier=&horizon=&hours=&tag=&search=&since=&sort=latest\|discussed\|signal&page=&limit=` | The feed. `tier=3` = tiers 1–3; `domain` is an alias of `category` and may repeat; `hours` is a rolling window; `sort=signal` orders tier then signal. |
 | `GET /api/news/status` | The radar strip: `{ source_count, last_capture_at, stories_24h, breaking_24h, latest_brief_at, latest_brief_type }`. |
+| `GET /api/news/alerts?limit=30` | Push alerts that went out, newest first (the apps' bell): `{ alerts: [{ type: 'breaking'|'brief', at, title, body, slug?, category?, date?, briefType? }] }`. |
 | `GET /api/news/story/:storyKey` | `{ lead, captures[] }` — every capture of one story, primary source first. |
 | `GET /api/news/front-page` | Breaking, lead, picks, latest, most discussed. |
 | `GET /api/news/:slugOrId` | One story plus related. |

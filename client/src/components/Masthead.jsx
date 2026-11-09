@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { BRAND, NAV } from '../brand';
 import Wordmark from './Wordmark';
 import ThemeToggle from './ThemeToggle';
+import AlertsBell from './AlertsBell';
 
 // One bar: the brand, three sections, search and the account. Topics live on the News page.
 // On phones the sections, search and account fold into the menu.
@@ -44,7 +45,10 @@ export default function Masthead() {
           <input type="search" placeholder="Search" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} />
         </form>
         <div className="masthead-account">{account}</div>
-        <ThemeToggle />
+        <div className="masthead-tools">
+          <AlertsBell />
+          <ThemeToggle />
+        </div>
         <button className="masthead-menu" aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen((o) => !o)}>
           {menuOpen ? 'Close' : 'Menu'}
         </button>

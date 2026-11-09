@@ -142,3 +142,30 @@ test('reader comments feed for the evening workflow (x-api-key)', async () => {
   assert.equal(alias.body.length, recent.body.length);
   await request(app).get('/api/comments?hours=24').expect(401);
 });
+
+test('alerts: sent stories and briefs, newest first, hidden and unsent left out', async () => {
+  const empty = await request(app).get('/api/news/alerts').expect(200);
+  assert.deepEqual(empty.body.alerts, []);
+
+  const t = (min) => new Date(Date.now() - min * 60 * 1000);
+  const [a, b] = await NewsItem.find({}).sort({ published: -1 }).limit(2).lean();
+  await NewsItem.updateOne({ _id: a._id }, { $set: { alertedAt: t(5) } });
+  await NewsItem.updateOne({ _id: b._id }, { $set: { alertedAt: t(1), hidden: true } });
+  await DailyBrief.updateOne({ briefType: 'evening' }, { $set: { alertedAt: t(2) } });
+
+  const res = await request(app).get('/api/news/alerts').expect(200);
+  const { alerts } = res.body;
+  assert.equal(alerts.length, 2);
+  assert.equal(alerts[0].type, 'brief');
+  assert.equal(alerts[0].briefType, 'evening');
+  assert.match(alerts[0].date, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(alerts[0].title, 'Evening Daily Brief is out');
+  assert.equal(alerts[1].type, 'breaking');
+  assert.equal(alerts[1].slug, a.slug || String(a._id));
+  assert.equal(alerts[1].title, a.title);
+
+  const one = await request(app).get('/api/news/alerts?limit=1').expect(200);
+  assert.equal(one.body.alerts.length, 1);
+
+  await NewsItem.updateOne({ _id: b._id }, { $set: { hidden: false } });
+});

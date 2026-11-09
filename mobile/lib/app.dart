@@ -8,6 +8,7 @@ import 'auth/auth_state.dart';
 import 'brand.dart';
 import 'models/news_item.dart';
 import 'push/push_service.dart';
+import 'screens/alerts_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/change_password_screen.dart';
 import 'screens/intelligence_screen.dart';
@@ -20,14 +21,18 @@ import 'screens/splash_screen.dart';
 import 'screens/story_screen.dart';
 import 'screens/topics_screen.dart';
 import 'screens/watchlist_screen.dart';
+import 'state/alerts_state.dart';
 import 'theme/app_theme.dart';
+import 'widgets/breaking_ticker.dart';
 import 'widgets/common.dart';
 
 class GsinApp extends StatefulWidget {
-  const GsinApp({super.key, required this.auth, required this.push, required this.theme});
+  const GsinApp({super.key, required this.auth, required this.push, required this.theme, required this.breaking, required this.alerts});
 
   final AuthState auth;
   final PushService push;
+  final BreakingState breaking;
+  final AlertsState alerts;
   final ThemeController theme;
 
   @override
@@ -75,6 +80,8 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
   }
 
   void _showForegroundAlert(PushAlert alert) {
+    widget.alerts.refresh();
+    if (!alert.isBrief) widget.breaking.refresh();
     _messenger.currentState?.showSnackBar(SnackBar(
       content: Text(alert.isBrief ? (alert.title ?? 'A new brief is out') : 'Breaking: ${alert.title ?? 'new story'}', maxLines: 2, overflow: TextOverflow.ellipsis),
       duration: const Duration(seconds: 8),
@@ -86,9 +93,10 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
   // on the web show up without a manual refresh.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && widget.auth.status == AuthStatus.authed) {
-      widget.auth.refresh();
-    }
+    if (state != AppLifecycleState.resumed) return;
+    widget.alerts.refresh();
+    widget.breaking.refresh();
+    if (widget.auth.status == AuthStatus.authed) widget.auth.refresh();
   }
 
   static String _decode(String s) {
@@ -160,6 +168,7 @@ class _GsinAppState extends State<GsinApp> with WidgetsBindingObserver {
       ),
       GoRoute(path: '/saved', builder: (context, state) => Scaffold(appBar: AppBar(title: const Text('Saved')), body: const SavedScreen())),
       GoRoute(path: '/newsroom', builder: (context, state) => const NewsroomScreen()),
+      GoRoute(path: '/alerts', builder: (context, state) => const AlertsScreen()),
       // Radar folded into News; old links land there.
       GoRoute(path: '/radar', redirect: (context, state) => '/news'),
       ShellRoute(
@@ -210,6 +219,7 @@ class _HomeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthState>().user;
     final theme = context.watch<ThemeController>();
+    final alerts = context.watch<AlertsState>();
     var index = _tabs.indexWhere((t) => t.path != '/' && location.startsWith(t.path));
     if (index < 0) index = 0;
     return Scaffold(
@@ -225,7 +235,19 @@ class _HomeShell extends StatelessWidget {
             onPressed: theme.toggle,
           ),
           IconButton(tooltip: 'Search', icon: const Icon(Icons.search), onPressed: () => context.push('/search')),
+          IconButton(
+            tooltip: alerts.unread ? 'Alerts, new' : 'Alerts',
+            icon: Badge(
+              isLabelVisible: alerts.unread,
+              smallSize: 8,
+              backgroundColor: context.palette.signal,
+              child: Icon(alerts.unread ? Icons.notifications : Icons.notifications_none),
+            ),
+            onPressed: () => context.push('/alerts'),
+          ),
+          const SizedBox(width: 4),
         ],
+        bottom: BreakingTicker(items: context.watch<BreakingState>().items),
       ),
       body: child,
       bottomNavigationBar: NavigationBar(
