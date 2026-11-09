@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute';
 import Masthead from './components/Masthead';
 import Footer from './components/Footer';
+import BreakingBar from './components/BreakingBar';
 import BackToTop from './components/BackToTop';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -34,6 +35,7 @@ export default function App() {
         <a className="skip" href="#main">Skip to content</a>
         <BootScreen />
         <Masthead />
+        <BreakingBar />
         <main id="main">
           <Routes>
             <Route path="/" element={<Landing />} />

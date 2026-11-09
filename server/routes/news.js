@@ -6,7 +6,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const { machineLimiter, readLimiter } = require('../middleware/rateLimit');
 const { capabilitiesFor } = require('../utils/capabilities');
 const { normalizeItem, isValid, upsertNewsItems } = require('../utils/ingest');
-const { alertBreaking } = require('../utils/push');
+const { alertBreaking, buildBriefMessage } = require('../utils/push');
 const DailyBrief = require('../models/DailyBrief');
 
 const SOURCE_COUNT = parseInt(process.env.RADAR_SOURCE_COUNT, 10) || 44;
@@ -225,6 +225,49 @@ router.get('/tags', readLimiter, async (_req, res) => {
   } catch (err) {
     console.error('tags error:', err);
     res.status(500).json({ error: 'Failed to fetch tags' });
+  }
+});
+
+// GET /api/news/alerts?limit=30 — the push alerts that went out, newest first:
+// breaking stories and "brief is out" pushes, read from the `alertedAt` stamp
+// utils/push.js sets when a send succeeds. The apps' bell lists these, so a
+// missed or dismissed notification can still be found. Public, like push.
+router.get('/alerts', readLimiter, async (req, res) => {
+  try {
+    const limit = Math.min(60, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const [stories, briefs] = await Promise.all([
+      NewsItem.find({ alertedAt: { $ne: null }, hidden: { $ne: true } })
+        .sort({ alertedAt: -1 })
+        .limit(limit)
+        .select('title headline summary slug category alertedAt')
+        .lean(),
+      DailyBrief.find({ alertedAt: { $ne: null } })
+        .sort({ alertedAt: -1 })
+        .limit(limit)
+        .select('briefingDate briefType alertedAt')
+        .lean(),
+    ]);
+    const alerts = [
+      ...stories.map((s) => ({
+        type: 'breaking',
+        at: s.alertedAt,
+        title: s.title,
+        body: (s.headline || s.summary || '').slice(0, 180),
+        slug: s.slug || String(s._id),
+        category: s.category || null,
+      })),
+      ...briefs.map((b) => {
+        const { notification, data } = buildBriefMessage({ briefingDate: b.briefingDate, briefType: b.briefType });
+        return { type: 'brief', at: b.alertedAt, title: notification.title, body: notification.body, date: data.date, briefType: b.briefType };
+      }),
+    ]
+      .sort((a, b) => new Date(b.at) - new Date(a.at))
+      .slice(0, limit);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ alerts });
+  } catch (err) {
+    console.error('alerts error:', err);
+    res.status(500).json({ error: 'Failed to fetch alerts' });
   }
 });
 

@@ -10,12 +10,12 @@ import '../config.dart';
 /// A push alert, from the FCM `data` payload the API sends
 /// (server/utils/push.js): a breaking story, or a brief going out.
 class PushAlert {
-  const PushAlert.breaking({required this.slug, this.title, this.body})
+  const PushAlert.breaking({required this.slug, this.title, this.body, this.at})
       : type = 'breaking',
         date = null,
         briefType = null;
 
-  const PushAlert.brief({required this.date, required this.briefType, this.title, this.body})
+  const PushAlert.brief({required this.date, required this.briefType, this.title, this.body, this.at})
       : type = 'brief',
         slug = null;
 
@@ -25,6 +25,9 @@ class PushAlert {
   final String? briefType;
   final String? title;
   final String? body;
+
+  /// When the alert went out (rows from GET /news/alerts; null for a live push).
+  final DateTime? at;
 
   bool get isBrief => type == 'brief';
 
@@ -45,6 +48,30 @@ class PushAlert {
     }
     return null;
   }
+
+  /// A row from GET /news/alerts (the bell's list).
+  static PushAlert? fromJson(Map<String, dynamic> j) {
+    final at = DateTime.tryParse(j['at']?.toString() ?? '');
+    final title = j['title'] as String?;
+    final body = j['body'] as String?;
+    switch (j['type']) {
+      case 'breaking':
+        final slug = j['slug'];
+        if (slug is! String || slug.isEmpty) return null;
+        return PushAlert.breaking(slug: slug, title: title, body: body, at: at);
+      case 'brief':
+        final date = j['date'];
+        if (date is! String || date.isEmpty) return null;
+        return PushAlert.brief(date: date, briefType: j['briefType'] as String?, title: title, body: body, at: at);
+    }
+    return null;
+  }
+
+  static List<PushAlert> listFrom(dynamic rows) => [
+        if (rows is List)
+          for (final r in rows)
+            if (r is Map<String, dynamic>) ?PushAlert.fromJson(r),
+      ];
 }
 
 /// Older name, kept for callers.

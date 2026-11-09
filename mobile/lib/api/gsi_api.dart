@@ -1,4 +1,5 @@
 import '../models/news_item.dart';
+import '../push/push_service.dart';
 import 'api_client.dart';
 
 /// Typed reads for the Global SI screens, on top of [ApiClient]. Every call
@@ -17,6 +18,7 @@ extension GsiApi on ApiClient {
     int page = 1,
     String? search,
     String? tag,
+    bool urgent = false,
   }) async {
     final qs = <String>[
       for (final d in domains) 'domain=${Uri.encodeQueryComponent(d)}',
@@ -25,6 +27,7 @@ extension GsiApi on ApiClient {
       if (hours != null) 'hours=$hours',
       if (search != null && search.isNotEmpty) 'search=${Uri.encodeQueryComponent(search)}',
       if (tag != null && tag.isNotEmpty) 'tag=${Uri.encodeQueryComponent(tag)}',
+      if (urgent) 'urgent=true',
       'sort=$sort',
       'limit=$limit',
       'page=$page',
@@ -32,6 +35,10 @@ extension GsiApi on ApiClient {
     final data = await get('/news?$qs');
     return NewsItem.listFrom(data['items']);
   }
+
+  /// The push alerts that went out, newest first (the bell's list).
+  Future<List<PushAlert>> alerts({int limit = 30}) async =>
+      PushAlert.listFrom((await get('/news/alerts?limit=$limit'))['alerts']);
 
   /// Breaking / lead / picks / latest / most discussed in one call.
   Future<Map<String, dynamic>> frontPage() => get('/news/front-page');
