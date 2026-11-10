@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import { BRAND, TIER_MEANING, TIER_NAME } from '../brand';
 import { LabelChip } from '../components/Chips';
 import { useDocumentTitle } from './Home';
+import { STATIC_PAGES } from '../seoRoutes';
 
 export default function About() {
-  useDocumentTitle(`How it works — ${BRAND.name}`);
+  useDocumentTitle(STATIC_PAGES['/about'].title, { description: STATIC_PAGES['/about'].description });
   return (
     <div className="shell intel">
       <h1>How {BRAND.name} works</h1>

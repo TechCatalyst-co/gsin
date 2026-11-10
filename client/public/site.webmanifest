@@ -1,0 +1,21 @@
+{
+  "name": "Global SI News",
+  "short_name": "Global SI",
+  "description": "Free, graded news on artificial intelligence and the road to superintelligence.",
+  "start_url": "/news",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B1F3B",
+  "theme_color": "#0B1F3B",
+  "lang": "en-US",
+  "categories": ["news", "technology"],
+  "icons": [
+    { "src": "/gsi-icon-224-transparent.png", "sizes": "224x224", "type": "image/png" },
+    { "src": "/gsi-icon-512-transparent.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/gsi-icon-1024-navy.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ],
+  "related_applications": [
+    { "platform": "itunes", "url": "https://apps.apple.com/us/app/global-super-intelligence-news/id6824711002" },
+    { "platform": "play", "url": "https://play.google.com/store/apps/details?id=co.techcatalyst.gsin", "id": "co.techcatalyst.gsin" }
+  ]
+}

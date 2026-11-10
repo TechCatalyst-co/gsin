@@ -13,6 +13,7 @@ import Intelligence from './pages/Intelligence';
 import Watchlist from './pages/Watchlist';
 import About from './pages/About';
 import BootScreen from './components/BootScreen';
+import { RouteSeo } from './seo';
 import { Research } from './pages/Topic';
 import Saved from './pages/Saved';
 import Register from './pages/Register';
@@ -32,6 +33,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <RouteSeo />
         <a className="skip" href="#main">Skip to content</a>
         <BootScreen />
         <Masthead />

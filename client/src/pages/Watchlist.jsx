@@ -5,6 +5,7 @@ import { BRAND } from '../brand';
 import { LabelChip } from '../components/Chips';
 import { storyPath, timeAgo } from '../format';
 import { useDocumentTitle } from './Home';
+import { STATIC_PAGES } from '../seoRoutes';
 
 const PT = 'America/Los_Angeles';
 function nextAt(hour, minute) {
@@ -30,7 +31,7 @@ export default function Watchlist() {
   const [upcoming, setUpcoming] = useState([]);
   const [evening, setEvening] = useState(null);
   const [, tick] = useState(0);
-  useDocumentTitle(`Watchlist — ${BRAND.name}`);
+  useDocumentTitle(STATIC_PAGES['/watchlist'].title, { description: STATIC_PAGES['/watchlist'].description });
 
   useEffect(() => {
     api('/news?horizon=upcoming&hours=336&limit=40').then((d) => setUpcoming(d.items || [])).catch(() => {});
