@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { APP_STORES, BRAND, categoryMeta } from '../brand';
 import { storyPath } from '../format';
 import { useDocumentTitle } from './Home';
+import { STATIC_PAGES } from '../seoRoutes';
 
 const WIRE_SIZE = 7;
 const POLL_MS = 60_000;
@@ -61,7 +62,7 @@ export default function Landing() {
   const [checkedAt, setCheckedAt] = useState(null);
   const [entering, setEntering] = useState(true);
   const known = useRef(null);
-  useDocumentTitle(`${BRAND.short} — ${BRAND.name}`);
+  useDocumentTitle(STATIC_PAGES['/'].title, { description: STATIC_PAGES['/'].description });
 
   useEffect(() => {
     let alive = true;

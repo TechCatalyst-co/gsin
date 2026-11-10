@@ -7,6 +7,7 @@ import { ConfidenceRing } from '../components/Signal';
 import BriefCalendar from '../components/BriefCalendar';
 import { Fold, TopicGroups } from '../components/Fold';
 import { useDocumentTitle } from './Home';
+import { STATIC_PAGES, briefPage } from '../seoRoutes';
 
 const isEvening = (b) => b?.briefType === 'evening';
 const statusLabel = (s) => String(s || 'pending').replace(/_/g, ' ');
@@ -19,7 +20,8 @@ export default function Intelligence() {
   const [brief, setBrief] = useState(undefined);
   const [editions, setEditions] = useState([]);
   const [error, setError] = useState('');
-  useDocumentTitle(`Briefs — ${BRAND.name}`);
+  const seo = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? briefPage(date, type) : STATIC_PAGES['/intelligence'];
+  useDocumentTitle(seo.title, { description: (date && brief?.summary) || seo.description, type: date ? 'article' : 'website' });
 
   useEffect(() => {
     setBrief(undefined);

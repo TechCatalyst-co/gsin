@@ -18,7 +18,12 @@ export default function Story() {
   const [data, setData] = useState(null);
   const [captures, setCaptures] = useState([]);
   const [error, setError] = useState('');
-  useDocumentTitle(data?.item ? `${data.item.title} — ${BRAND.name}` : BRAND.name);
+  useDocumentTitle(data?.item ? `${data.item.title} — ${BRAND.name}` : BRAND.name, {
+    description: data?.item ? (data.item.impact || data.item.summary || data.item.headline) : undefined,
+    image: data?.item?.imageUrl && isSafeHttpUrl(data.item.imageUrl) ? data.item.imageUrl : undefined,
+    type: data?.item ? 'article' : 'website',
+    noindex: !!error,
+  });
 
   useEffect(() => {
     setData(null);

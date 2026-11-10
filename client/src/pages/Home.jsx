@@ -6,11 +6,11 @@ import { BRAND, CATEGORIES } from '../brand';
 import { StoryLead, StoryList } from '../components/Story';
 import { TopicGroups } from '../components/Fold';
 import { storyPath } from '../format';
+import { useSeo } from '../seo';
+import { STATIC_PAGES } from '../seoRoutes';
 
-function useDocumentTitle(title) {
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
+function useDocumentTitle(title, opts = {}) {
+  useSeo({ title, ...opts });
 }
 
 export { useDocumentTitle };
@@ -28,7 +28,7 @@ export default function Home() {
   const [feed, setFeed] = useState([]);
   const [brief, setBrief] = useState(null);
   const [error, setError] = useState('');
-  useDocumentTitle(`${BRAND.name} — ${BRAND.tagline}`);
+  useDocumentTitle(STATIC_PAGES['/news'].title, { description: STATIC_PAGES['/news'].description });
 
   useEffect(() => {
     api('/news/front-page').then(setData).catch((e) => setError(e.message));

@@ -70,6 +70,9 @@ p { margin: 0 0 1em; }
 
 .skip { position: absolute; left: -999px; top: 8px; background: var(--ink); color: var(--paper); padding: 8px 12px; z-index: 50; }
 .skip:focus { left: 8px; }
+/* Server-rendered copy for crawlers (netlify/edge-functions/seo.js); React replaces it on mount. */
+.prerender { max-width: 720px; margin: 32px auto; padding: 0 16px; overflow-wrap: anywhere; }
+.prerender nav ul, .prerender ol { padding-left: 1.2em; }
 
 /* ------------------------------------------------------------ buttons */
 .btn {

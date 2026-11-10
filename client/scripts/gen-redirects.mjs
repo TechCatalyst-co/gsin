@@ -32,6 +32,8 @@ const contents = `# GENERATED at build time by scripts/gen-redirects.mjs — do 
 /api/*   ${target}/api/:splat   200!
 /rss.xml   ${target}/api/v1/public/rss   200!
 /sitemap.xml   ${target}/api/v1/public/sitemap.xml   200!
+/news-sitemap.xml   ${target}/api/v1/public/news-sitemap.xml   200!
+/llms-full.txt   ${target}/api/v1/public/llms-full.txt   200!
 /*       /index.html            200
 `;
 

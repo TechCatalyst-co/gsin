@@ -195,6 +195,14 @@ test('public: RSS, sitemap, share preview; subscribers for n8n', async () => {
   assert.match(rss.text, /news\.example\.com\/story\//);
   const map = await request(app).get('/api/public/sitemap.xml').expect(200);
   assert.match(map.text, /<urlset/);
+  assert.match(map.text, /news\.example\.com\/topic\/ai-safety-alignment/);
+  assert.match(map.text, /news\.example\.com\/intelligence<\/loc>/);
+  const newsMap = await request(app).get('/api/public/news-sitemap.xml').expect(200);
+  assert.match(newsMap.text, /xmlns:news=/);
+  const full = await request(app).get('/api/public/llms-full.txt').expect(200);
+  assert.match(full.headers['content-type'], /text\/plain/);
+  assert.match(full.text, /^# Global SI News — full text/);
+  assert.match(full.text, /Permalink: https:\/\/news\.example\.com\/story\//);
   const story = await NewsItem.findOne({ url: sample[0].url }).lean();
   const prev = await request(app).get(`/api/public/news/${story.slug}/preview`).expect(200);
   assert.equal(prev.body.slug, story.slug);

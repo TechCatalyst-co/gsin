@@ -1,0 +1,50 @@
+# Global SI News — https://globalsinews.com
+# All public news, briefs and topic pages are open to search engines and AI assistants.
+# A plain-text guide for language models lives at /llms.txt (full text: /llms-full.txt).
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /saved
+Disallow: /change-password
+Disallow: /delete-account
+Disallow: /login
+Disallow: /register
+Disallow: /api/
+Allow: /api/v1/public/
+
+# AI search and assistant crawlers: welcome. Listed explicitly so a future blanket rule
+# elsewhere does not shut them out by accident.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bingbot
+User-agent: DuckAssistBot
+User-agent: CCBot
+User-agent: meta-externalagent
+User-agent: MistralAI-User
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /saved
+Disallow: /change-password
+Disallow: /delete-account
+Disallow: /login
+Disallow: /register
+Disallow: /api/
+Allow: /api/v1/public/
+Allow: /api/v1/news
+Allow: /api/v1/daily-brief
+
+Sitemap: https://globalsinews.com/sitemap.xml
+Sitemap: https://globalsinews.com/news-sitemap.xml

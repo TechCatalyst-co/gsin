@@ -3,6 +3,8 @@
 const BRAND = {
   name: process.env.BRAND_NAME || 'Global Super Intelligence News',
   short: process.env.BRAND_SHORT || 'GSIN',
+  // The name the website uses in its masthead (Google News publication name).
+  webName: process.env.BRAND_WEB_NAME || 'Global SI News',
   tagline: process.env.BRAND_TAGLINE || 'News on artificial intelligence and the road to superintelligence, from around the world.',
 };
 

@@ -4,6 +4,7 @@ import { api } from '../api';
 import { BRAND, categoryFromSlug, categoryMeta } from '../brand';
 import { StoryList } from '../components/Story';
 import { TopicBar, useDocumentTitle } from './Home';
+import { STATIC_PAGES, topicPage } from '../seoRoutes';
 
 const SORTS = [
   { key: 'signal', label: 'Strongest signal' },
@@ -76,7 +77,8 @@ export default function Topic() {
   // Unknown desks (any category n8n sends) carry their exact name in ?name=.
   const name = categoryFromSlug(slug) || params.get('name') || slug.replace(/-/g, ' ');
   const meta = categoryMeta(name);
-  useDocumentTitle(`${meta.name} — ${BRAND.short}`);
+  const seo = topicPage(slug);
+  useDocumentTitle(seo?.title || `${meta.name} — ${BRAND.name}`, { description: seo?.description, noindex: !seo });
   return (
     <FeedPage
       key={slug}
@@ -110,6 +112,6 @@ export function Search() {
 // and open-source releases — four desks in one feed.
 const RESEARCH_DESKS = ['Frontier Models & AGI', 'AI Safety & Alignment', 'Medical & Life Sciences', 'Open Source & Developer Tools'];
 export function Research() {
-  useDocumentTitle(`Research — ${BRAND.name}`);
+  useDocumentTitle(STATIC_PAGES['/research'].title, { description: STATIC_PAGES['/research'].description });
   return <FeedPage title="Research" intro="Frontier releases, capability thresholds, safety and alignment work, and the papers behind the claims." query={{ domain: RESEARCH_DESKS }} topics />;
 }

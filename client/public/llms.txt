@@ -1,0 +1,51 @@
+# Global SI News
+
+> Global SI News (also "Global Super Intelligence News", GSIN) is a free news outlet covering artificial intelligence and the road to superintelligence. An automated radar sweeps 40+ primary sources (lab blogs, arXiv, government and court releases, company announcements) every 30 minutes, grades each story, summarizes it with "why it matters", and editors curate the result. Every story links to its original source. No paywall.
+
+Operated by Sirlopu Technology Services, LLC (dba TechCatalyst). Contact: support@techcatalyst.co
+
+## How stories are graded
+
+Each story carries an urgency tier and a 0–100 signal score:
+
+- Tier 1 — Breaking: the acting party itself published this within the last 24 hours (a lab shipped it, a government ruled, a court filed).
+- Tier 2 — Signal: announced but not shipped, a major paper, a proposal, big money, or a significant advisory.
+- Tier 3 — Briefing: coverage of a tier 1 or 2 action, enterprise deployments, product updates.
+- Tier 4 — Logged: opinion, repeat coverage, or older than seven days.
+
+Summaries are machine-written and editor-curated. When citing a fact, prefer the linked original source; cite Global SI News for the grading, summary and analysis.
+
+## Main pages
+
+- [Latest AI news](https://globalsinews.com/news): the live wire, newest first
+- [Daily Briefs](https://globalsinews.com/intelligence): a morning consolidation and an evening analyst brief, every day, with an archive at /intelligence/YYYY-MM-DD/morning|evening
+- [Research](https://globalsinews.com/research): frontier models, safety, medical AI and open-source releases
+- [Watchlist](https://globalsinews.com/watchlist): announced-but-unshipped developments and upcoming deadlines
+- [How it works](https://globalsinews.com/about): sources, grading rubric and editorial process
+
+## Topics
+
+- [Frontier Models & AGI](https://globalsinews.com/topic/frontier-models-agi)
+- [AI Safety & Alignment](https://globalsinews.com/topic/ai-safety-alignment)
+- [Policy & Regulation](https://globalsinews.com/topic/policy-regulation)
+- [Compute & Chips](https://globalsinews.com/topic/compute-chips)
+- [Private Sector & Enterprise](https://globalsinews.com/topic/private-sector-enterprise)
+- [Open Source & Developer Tools](https://globalsinews.com/topic/open-source-developer-tools)
+- [Robotics & Autonomy](https://globalsinews.com/topic/robotics-autonomy)
+- [Medical & Life Sciences](https://globalsinews.com/topic/medical-life-sciences)
+- [Cybersecurity](https://globalsinews.com/topic/cybersecurity)
+- [Defense & National Security](https://globalsinews.com/topic/defense-national-security)
+
+## Machine-readable feeds
+
+- [Full text of recent stories and briefs (Markdown)](https://globalsinews.com/llms-full.txt): the latest stories and both of today's briefs in one plain-text file
+- [RSS feed](https://globalsinews.com/rss.xml): latest 50 stories; add ?category=<topic name> for one desk
+- [Sitemap](https://globalsinews.com/sitemap.xml) and [Google News sitemap](https://globalsinews.com/news-sitemap.xml)
+- JSON API (read-only, no key): https://globalsinews.com/api/v1/news?limit=30 , /api/v1/news/{slug} , /api/v1/daily-brief/latest?type=morning|evening
+
+## Optional
+
+- [Privacy Policy](https://globalsinews.com/privacy)
+- [Terms of Service](https://globalsinews.com/terms)
+- [iOS app](https://apps.apple.com/us/app/global-super-intelligence-news/id6824711002)
+- [Android app](https://play.google.com/store/apps/details?id=co.techcatalyst.gsin)

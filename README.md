@@ -119,6 +119,7 @@ Ads: `VITE_ADS_PROVIDER` and slot IDs on the web, `ADS_PROVIDER` in the app. See
 
 - **API:** Render blueprint in `render.yaml` (or any Node host).
 - **Web:** Netlify (`netlify.toml`); `/api/*`, `/rss.xml`, and `/sitemap.xml` are proxied to the API.
+- **SEO and AI crawlers:** `client/netlify/edge-functions/seo.js` writes each page's title, description, canonical, Open Graph tags, schema.org JSON-LD and a plain-HTML copy of the story or brief into the first response, so crawlers that skip JavaScript (and AI bots like GPTBot, ClaudeBot and PerplexityBot) see real content. Unknown URLs return a real 404 and legacy paths a 301. Page titles live in `client/src/seoRoutes.js`. Crawler files: `client/public/robots.txt`, `client/public/llms.txt`; the API serves `/sitemap.xml`, `/news-sitemap.xml` (Google News, last 48 hours) and `/llms-full.txt`. The canonical domain defaults to `https://globalsinews.com`; override it with `PUBLIC_SITE_URL` in Netlify, and keep `CLIENT_URL` on the API set to the same origin.
 - **Mobile:** see [mobile/RELEASE.md](mobile/RELEASE.md). Bundle ID `co.techcatalyst.gsin`; home-screen label "GSIN". Before release, set the real `API_BASE_URL` / `WEB_BASE_URL` defaults in `mobile/lib/config.dart`.
 - **Before launch:** replace the placeholder domains (`client/scripts/gen-redirects.mjs`, `mobile/lib/config.dart`), have the Privacy and Terms templates reviewed, and swap in final icon art (`mobile/assets/icon`, `client/public/favicon.svg`).
 
